@@ -22,3 +22,4 @@ Auto-Cards is both free and open source for anyone to use within their own scena
 ### Auto-Cards script testing, feedback, and discussion thread
 - https://discord.com/channels/903327676884979802/1347300413652734064/1347300413652734064
 - https://discord.gg/VJXwe7bj3A (AI Dungeon main Discord server, required to access the link above)
+- Just ping me any time @LewdLeah to talk
