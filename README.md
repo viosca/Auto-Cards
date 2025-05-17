@@ -21,7 +21,7 @@ Auto-Cards is both free and open source for anyone to use within their own scena
 4. Scroll to the bottom and select "EDIT SCRIPTS"
 5. Select "Input" on the left
 6. Delete everything you see there
-7. Copy + paste this stuff inside:
+7. Copy + paste [this stuff](/input.js) inside:
 ```javascript
 // Hello
 ```
