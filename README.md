@@ -22,4 +22,4 @@ My AI Dungeon profile page:
 
 Auto-Cards script testing, feedback, and discussion thread:
 - https://discord.com/channels/903327676884979802/1347300413652734064/1347300413652734064
-- https://discord.gg/VJXwe7bj3A (AI Dungeon main Discord server, to access the link above)
+- https://discord.gg/VJXwe7bj3A (AI Dungeon main Discord server, required to access the link above)
