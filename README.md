@@ -66,8 +66,11 @@ modifier(text);
 ```
 14. Select "Library" on the left
 15. Delete everything you see there
-16. Open my full Library code in a new browser tab
+16. Open my full Library code (hyperlink below) in a new browser tab
 - [Library](./library.js)
+17. Copy the *entire* code from said tab and paste this inside your scenario script
+18. Click the big yellow "SAVE" button at the top left (unbelievably important)
+19. And you're done. Any adventures you play from this scenario will have Auto-Cards installed
 ## Useful Links
 ### Minimal demonstration
 - https://play.aidungeon.com/scenario/Ddt0Akd-lVtj/auto-cards
