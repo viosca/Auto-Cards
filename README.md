@@ -66,7 +66,8 @@ modifier(text);
 ```
 14. Select "Library" on the left
 15. Delete everything you see there
-16. Copy and paste this inside:
+16. Open this link in a new tab:
+- 
 ## Useful Links
 ### Minimal demonstration
 - https://play.aidungeon.com/scenario/Ddt0Akd-lVtj/auto-cards
