@@ -66,7 +66,7 @@ modifier(text);
 ```
 14. Select "Library" on the left
 15. Delete everything you see there
-16. Open this link in a new tab:
+16. Open this link in a new tab: library.js
 - 
 ## Useful Links
 ### Minimal demonstration
