@@ -66,8 +66,8 @@ modifier(text);
 ```
 14. Select "Library" on the left
 15. Delete everything you see there
-16. Open this link in a new tab: library.js
-- 
+16. Open my full Library code in a new browser tab
+- [Library](./library.js)
 ## Useful Links
 ### Minimal demonstration
 - https://play.aidungeon.com/scenario/Ddt0Akd-lVtj/auto-cards
