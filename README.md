@@ -64,7 +64,7 @@ const modifier = (text) => {
 };
 modifier(text);
 ```
-14. Select "Output" on the left
+14. Select "Library" on the left
 15. Delete everything you see there
 16. Copy and paste this inside:
 ## Useful Links
