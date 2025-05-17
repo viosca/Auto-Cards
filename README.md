@@ -14,6 +14,8 @@ Auto-Cards is a plug-and-play script for AI Dungeon that watches your story and 
 - Optional API for other creators to use
 ## Permission
 Auto-Cards is both free and open source for anyone to use within their own scenarios or scripts, even including published works. General-purpose usefulness and compatibility were my top design priorities. You have my full permission to use, copy, or modify Auto-Cards. Please enjoy! ❤️
+## Installation Guide
+- WIP
 ## Useful links
 ### Minimal demonstration
 - https://play.aidungeon.com/scenario/Ddt0Akd-lVtj/auto-cards
