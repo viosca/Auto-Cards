@@ -21,11 +21,52 @@ Auto-Cards is both free and open source for anyone to use within their own scena
 4. Scroll to the bottom and select "EDIT SCRIPTS"
 5. Select "Input" on the left
 6. Delete everything you see there
-7. Copy + paste [this stuff](/input.js) inside:
+7. Copy and paste this inside:
 ```javascript
-// Hello
+// Your "Input" tab should look like this
+const modifier = (text) => {
+  //
+  // Ideally, your other input code goes above this line
+  text = AutoCards("input", text);
+  // Alternatively, you may also put it below this line
+  //
+  return {text};
+};
+modifier(text);
 ```
-8. Test
+8. Select "Context" on the left
+9. Delete everything you see there
+10. Copy and paste this inside:
+```javascript
+// Your "Context" tab should look like this
+const modifier = (text) => {
+  //
+  // Ideally, your other context code goes above this line
+  [text, stop] = AutoCards("context", text, stop);
+  // Alternatively, you may also put it below this line
+  //
+  return {text, stop};
+};
+modifier(text);
+```
+11. Select "Output" on the left
+12. Delete everything you see there
+13. Copy and paste this inside:
+```javascript
+// Your "Output" tab should look like this
+const modifier = (text) => {
+  //
+  // Ideally, your other output code goes above this line
+  text = AutoCards("output", text);
+  // Alternatively, you may also put it below this line
+  //
+  return {text};
+};
+modifier(text);
+```
+14. Select "Output" on the left
+15. Delete everything you see there
+16. Copy and paste this inside:
 ## Useful Links
 ### Minimal demonstration
 - https://play.aidungeon.com/scenario/Ddt0Akd-lVtj/auto-cards
