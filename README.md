@@ -70,7 +70,8 @@ modifier(text);
 - [Library](./library.js)
 17. Copy the *entire* code from said tab and paste this inside your scenario script
 18. Click the big yellow "SAVE" button at the top left (unbelievably important)
-19. And you're done. Any adventures you play from this scenario will have Auto-Cards installed
+19. And you're done!
+20. Keep in mind that any adventures played from your scenario will include Auto-Cards (this even applies retroactively)
 ## Useful Links
 ### Minimal demonstration
 - https://play.aidungeon.com/scenario/Ddt0Akd-lVtj/auto-cards
