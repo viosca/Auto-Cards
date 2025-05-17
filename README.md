@@ -1,7 +1,7 @@
 # Auto-Cards
 Made by LewdLeah ❤️
 ## Overview
-- Auto-Cards is a plug-and-play script for AI Dungeon that watches your story and automatically writes plot-relevant story cards during normal gameplay. My primary goal was to address the "object permanence problem" by extending story cards and memories with deeper automation. Auto-Cards builds a living reference of your adventure's world as you go.
+Auto-Cards is a plug-and-play script for AI Dungeon that watches your story and automatically writes plot-relevant story cards during normal gameplay. My primary goal was to address the "object permanence problem" by extending story cards and memories with deeper automation. Auto-Cards builds a living reference of your adventure's world as you go.
 ## Main Features
 - Object permanence! (sort of)
 - Simple and easy to use, full background automation allows you to focus on gameplay
@@ -13,12 +13,12 @@ Made by LewdLeah ❤️
 - Optional in-game scripting interface (LSIv2)
 - Optional API for other creators to use
 ## Permission
-- Auto-Cards is both free and open source for anyone to use within their own scenarios or scripts, even including published works. General-purpose usefulness and compatibility were my top design priorities. You have my full permission to use, copy, or modify Auto-Cards. Please enjoy! ❤️
+Auto-Cards is both free and open source for anyone to use within their own scenarios or scripts, even including published works. General-purpose usefulness and compatibility were my top design priorities. You have my full permission to use, copy, or modify Auto-Cards. Please enjoy! ❤️
 ## Useful links
 ### Minimal demonstration
-- https://play.aidungeon.com/scenario/Ddt0Akd-lVtj/auto-cards
+https://play.aidungeon.com/scenario/Ddt0Akd-lVtj/auto-cards
 ### My AI Dungeon profile page
-- https://play.aidungeon.com/profile/LewdLeah
+https://play.aidungeon.com/profile/LewdLeah
 ### Auto-Cards script testing, feedback, and discussion thread
-- https://discord.com/channels/903327676884979802/1347300413652734064/1347300413652734064
-- https://discord.gg/VJXwe7bj3A (AI Dungeon main Discord server, required to access the link above)
+https://discord.com/channels/903327676884979802/1347300413652734064/1347300413652734064
+https://discord.gg/VJXwe7bj3A (AI Dungeon main Discord server, required to access the link above)
