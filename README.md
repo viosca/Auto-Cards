@@ -12,7 +12,7 @@ Main Features:
 - Optional in-game scripting interface (LSIv2)
 - Optional API for other creators to use
 
-Auto-Cards is both free and open source for anyone to use within their own scenarios or scripts, even including published works. General-purpose usefulness and compatibility were my top design priorities. I really hope you enjoy ❤️
+Auto-Cards is both free and open source for anyone to use within their own scenarios or scripts, even including published works. General-purpose usefulness and compatibility were my top design priorities. Please enjoy! ❤️
 
 Minimal demonstration:
 https://play.aidungeon.com/scenario/Ddt0Akd-lVtj/auto-cards
