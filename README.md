@@ -15,7 +15,9 @@ Auto-Cards is a plug-and-play script for AI Dungeon that watches your story and 
 ## Permission
 Auto-Cards is both free and open source for anyone to use within their own scenarios or scripts, even including published works. General-purpose usefulness and compatibility were my top design priorities. You have my full permission to use, copy, or modify Auto-Cards. Please enjoy! ❤️
 ## Installation Guide
-1. Sign in on the [AI Dungeon website](https://aidungeon.com/) (Does not work from the mobile app!)
+1. Sign-in on the [AI Dungeon website](https://aidungeon.com/)
+- Scripts cannot be *added* via the AID mobile app! Though they can still be *played*
+- Adding scripts via the AID mobile website is an enormous pain in the ass
 2. Create a new scenario or edit an old scenario (Scenarios are not adventures!)
 3. 
 ## Useful Links
