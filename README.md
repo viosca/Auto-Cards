@@ -79,5 +79,5 @@ modifier(text);
 - [LewdLeah](https://play.aidungeon.com/profile/LewdLeah)
 ### Auto-Cards discussion thread
 - [Auto-Cards script testing & feedback](https://discord.com/channels/903327676884979802/1347300413652734064/1347300413652734064)
-- [AI Dungeon official Discord server invite](https://discord.gg/VJXwe7bj3A) (required to access the link above)
+- [AI Dungeon official Discord server invite](https://discord.gg/VJXwe7bj3A) (required to access the first link)
 - Just ping me any time @LewdLeah to talk
