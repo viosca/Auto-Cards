@@ -73,7 +73,7 @@ modifier(text);
 19. And you're done!
 20. Keep in mind that any adventures played from your scenario will include Auto-Cards (this even applies retroactively)
 ## Useful Links
-### Minimal demonstration
+### Simple demo scenario
 - [Auto-Cards](https://play.aidungeon.com/scenario/Ddt0Akd-lVtj/auto-cards)
 ### My AI Dungeon profile page
 - [LewdLeah](https://play.aidungeon.com/profile/LewdLeah)
