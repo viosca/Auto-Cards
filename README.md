@@ -67,9 +67,9 @@ modifier(text);
 14. Select "Library" on the left
 15. Delete everything you see there
 16. Open my full Library code (hyperlink below) in a new browser tab
-- [Library](./library.js)
-17. Copy the *entire* code from said tab and paste this inside your scenario script
-18. Click the big yellow "SAVE" button at the top right (unbelievably important)
+- [Library code](./library.js)
+17. Copy my *full* code from the page above and paste it into your scenario's Library script
+18. Click the big yellow "SAVE" button at the top right
 19. And you're done!
 20. Keep in mind that any adventures played from your scenario will include Auto-Cards (this even applies retroactively)
 ## Useful Links
