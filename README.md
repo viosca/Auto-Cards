@@ -74,10 +74,10 @@ modifier(text);
 20. Keep in mind that any adventures played from your scenario will include Auto-Cards (this even applies retroactively)
 ## Useful Links
 ### Minimal demonstration
-- https://play.aidungeon.com/scenario/Ddt0Akd-lVtj/auto-cards
+- [Auto-Cards](https://play.aidungeon.com/scenario/Ddt0Akd-lVtj/auto-cards)
 ### My AI Dungeon profile page
-- https://play.aidungeon.com/profile/LewdLeah
+- [LewdLeah](https://play.aidungeon.com/profile/LewdLeah)
 ### Auto-Cards discussion thread
-- https://discord.com/channels/903327676884979802/1347300413652734064/1347300413652734064
-- https://discord.gg/VJXwe7bj3A (AI Dungeon main Discord server, required to access the link above)
+- [Auto-Cards script testing & feedback](https://discord.com/channels/903327676884979802/1347300413652734064/1347300413652734064)
+- [AI Dungeon official Discord server invite](https://discord.gg/VJXwe7bj3A) (required to access the link above)
 - Just ping me any time @LewdLeah to talk
