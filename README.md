@@ -67,7 +67,7 @@ modifier(text);
 14. Select "Library" on the left
 15. Delete everything you see there
 16. Open my full Library code (hyperlink below) in a new browser tab
-- [Library code](./library.js)
+- [Library code](./src/library.js)
 17. Copy my *full* code from the page above and paste it into your scenario's Library script
 18. Click the big yellow "SAVE" button in the top right corner
 19. And you're done!
