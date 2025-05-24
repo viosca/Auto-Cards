@@ -1,0 +1,39 @@
+{
+  "name": "auto-cards",
+  "description": "Auto-Cards is an AI Dungeon script ",
+  "author": "LewdLeah & contributors",
+  "version": "1.0.0",
+  "license": "MIT",
+  "homepage": "https://github.com/LewdLeah/Auto-Cards",
+  "bugs": {
+    "url": "https://github.com/LewdLeah/Auto-Cards/issues"
+  },
+  "type": "module",
+  "scripts": {
+    "minify": "terser ./src/library.js -c -o library.min.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.27.0",
+    "eslint": "^9.27.0",
+    "eslint-config-prettier": "^10.1.5",
+    "globals": "^16.1.0",
+    "prettier": "^3.5.3",
+    "terser": "^5.39.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.32.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LewdLeah/Auto-Cards.git"
+  },
+  "private": true,
+  "keywords": [
+    "autocards",
+    "aidungeon",
+    "aid"
+  ],
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10"
+  }
+}
