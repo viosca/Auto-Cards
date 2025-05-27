@@ -21,7 +21,7 @@ Auto-Cards is both free and open source for anyone to use within their own scena
 4. Scroll to the bottom and select `EDIT SCRIPTS`
 5. Select the `Input` tab on the left
 6. Delete all code within said tab
-7. Copy and paste the following code into the empty tab:
+7. Copy and paste the following code into your empty `Input` tab:
 ```javascript
 // Your "Input" tab should look like this
 const modifier = (text) => {
@@ -34,7 +34,7 @@ modifier(text);
 ```
 8. Select the `Context` tab on the left
 9. Delete all code within said tab
-10. Copy and paste the following code into the empty tab:
+10. Copy and paste the following code into empty `Context` tab:
 ```javascript
 // Your "Context" tab should look like this
 const modifier = (text) => {
@@ -47,7 +47,7 @@ modifier(text);
 ```
 11. Select the `Output` tab on the left
 12. Delete all code within said tab
-13. Copy and paste the following code into the empty tab:
+13. Copy and paste the following code into your empty `Output` tab:
 ```javascript
 // Your "Output" tab should look like this
 const modifier = (text) => {
