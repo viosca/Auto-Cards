@@ -18,10 +18,10 @@ Auto-Cards is both free and open source for anyone to use within their own scena
 1. Use the [AI Dungeon website](https://aidungeon.com/) on PC (or view as desktop if mobile-only)
 2. [Create a new scenario](https://help.aidungeon.com/faq/what-are-scenarios) or edit one of your existing scenarios
 3. Open the `DETAILS` tab at the top while editing your scenario
-4. Scroll to the bottom and select "EDIT SCRIPTS"
-5. Select "Input" on the left
-6. Delete everything you see there
-7. Copy and paste this inside:
+4. Scroll to the bottom and select `EDIT SCRIPTS`
+5. Select the `Input` tab on the left
+6. Delete all code within said tab
+7. Copy and paste the following code inside:
 ```javascript
 // Your "Input" tab should look like this
 const modifier = (text) => {
@@ -32,9 +32,9 @@ const modifier = (text) => {
 };
 modifier(text);
 ```
-8. Select "Context" on the left
-9. Delete everything you see there
-10. Copy and paste this inside:
+8. Select the `Context` tab on the left
+9. Delete all code within said tab
+10. Copy and paste the following code inside:
 ```javascript
 // Your "Context" tab should look like this
 const modifier = (text) => {
@@ -45,9 +45,9 @@ const modifier = (text) => {
 };
 modifier(text);
 ```
-11. Select "Output" on the left
-12. Delete everything you see there
-13. Copy and paste this inside:
+11. Select the `Output` tab on the left
+12. Delete all code within said tab
+13. Copy and paste the following code inside:
 ```javascript
 // Your "Output" tab should look like this
 const modifier = (text) => {
@@ -58,11 +58,11 @@ const modifier = (text) => {
 };
 modifier(text);
 ```
-14. Select "Library" on the left
-15. Delete everything you see there
+14. Select the `Library` tab on the left
+15. Delete all code within said tab
 16. Open my full Library code (hyperlink below) in a new browser tab
 - [Library code](./src/library.js)
-17. Copy my *full* code from the page above and paste it into your scenario's Library script
+17. Copy my *full* code from the page above and paste it into your empty `Library` tab
 18. Click the big yellow "SAVE" button in the top right corner
 19. And you're done!
 20. Keep in mind that any adventures played from your scenario will include Auto-Cards (this also applies retroactively)
