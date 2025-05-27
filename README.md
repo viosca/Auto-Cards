@@ -25,11 +25,9 @@ Auto-Cards is both free and open source for anyone to use within their own scena
 ```javascript
 // Your "Input" tab should look like this
 const modifier = (text) => {
-  //
-  // Ideally, your other input code goes above this line
+  // Your other input modifier scripts go here (preferred)
   text = AutoCards("input", text);
-  // Alternatively, you may also put it below this line
-  //
+  // Your other input modifier scripts go here (alternative)
   return {text};
 };
 modifier(text);
@@ -40,11 +38,9 @@ modifier(text);
 ```javascript
 // Your "Context" tab should look like this
 const modifier = (text) => {
-  //
-  // Ideally, your other context code goes above this line
+  // Your other context modifier scripts go here (preferred)
   [text, stop] = AutoCards("context", text, stop);
-  // Alternatively, you may also put it below this line
-  //
+  // Your other context modifier scripts go here (alternative)
   return {text, stop};
 };
 modifier(text);
@@ -55,11 +51,9 @@ modifier(text);
 ```javascript
 // Your "Output" tab should look like this
 const modifier = (text) => {
-  //
-  // Ideally, your other output code goes above this line
+  // Your other output modifier scripts go here (preferred)
   text = AutoCards("output", text);
-  // Alternatively, you may also put it below this line
-  //
+  // Your other output modifier scripts go here (alternative)
   return {text};
 };
 modifier(text);
@@ -71,7 +65,7 @@ modifier(text);
 17. Copy my *full* code from the page above and paste it into your scenario's Library script
 18. Click the big yellow "SAVE" button in the top right corner
 19. And you're done!
-20. Keep in mind that any adventures played from your scenario will include Auto-Cards (this even applies retroactively)
+20. Keep in mind that any adventures played from your scenario will include Auto-Cards (this also applies retroactively)
 ## Useful Links
 ### Simple demo scenario
 - [Auto-Cards](https://play.aidungeon.com/scenario/Ddt0Akd-lVtj/auto-cards)
