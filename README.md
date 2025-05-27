@@ -17,7 +17,7 @@ Auto-Cards is both free and open source for anyone to use within their own scena
 ## Basic Installation Guide
 1. Use the [AI Dungeon website](https://aidungeon.com/) on PC (or view as desktop if mobile-only)
 2. [Create a new scenario](https://help.aidungeon.com/faq/what-are-scenarios) or edit one of your existing scenarios
-3. Open the "DETAILS" tab at the top while editing your scenario
+3. Open the `DETAILS` tab at the top while editing your scenario
 4. Scroll to the bottom and select "EDIT SCRIPTS"
 5. Select "Input" on the left
 6. Delete everything you see there
