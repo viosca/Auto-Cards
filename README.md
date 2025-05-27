@@ -21,7 +21,7 @@ Auto-Cards is both free and open source for anyone to use within their own scena
 4. Scroll to the bottom and select `EDIT SCRIPTS`
 5. Select the `Input` tab on the left
 6. Delete all code within said tab
-7. Copy and paste the following code inside:
+7. Copy and paste the following code into the empty tab:
 ```javascript
 // Your "Input" tab should look like this
 const modifier = (text) => {
@@ -34,7 +34,7 @@ modifier(text);
 ```
 8. Select the `Context` tab on the left
 9. Delete all code within said tab
-10. Copy and paste the following code inside:
+10. Copy and paste the following code into the empty tab:
 ```javascript
 // Your "Context" tab should look like this
 const modifier = (text) => {
@@ -47,7 +47,7 @@ modifier(text);
 ```
 11. Select the `Output` tab on the left
 12. Delete all code within said tab
-13. Copy and paste the following code inside:
+13. Copy and paste the following code into the empty tab:
 ```javascript
 // Your "Output" tab should look like this
 const modifier = (text) => {
@@ -62,8 +62,8 @@ modifier(text);
 15. Delete all code within said tab
 16. Open my full Library code (hyperlink below) in a new browser tab
 - [Library code](./src/library.js)
-17. Copy my *full* code from the page above and paste it into your empty `Library` tab
-18. Click the big yellow "SAVE" button in the top right corner
+17. Copy my *full* code from the page above and paste into your empty `Library` tab
+18. Click the big yellow `SAVE` button in the top right corner
 19. And you're done!
 20. Keep in mind that any adventures played from your scenario will include Auto-Cards (this also applies retroactively)
 ## Useful Links
