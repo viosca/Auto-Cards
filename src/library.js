@@ -5963,3 +5963,5 @@ function AutoCards(inHook, inText, inStop) {
         return codomain;
     }
 } AutoCards(null); function isolateLSIv2(code, log, text, stop) { const console = Object.freeze({log}); try { eval(code); return [null, text, stop]; } catch (error) { return [error, text, stop]; } }
+
+// Your other library scripts go here
