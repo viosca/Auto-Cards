@@ -71,19 +71,19 @@ function AutoCards(inHook, inText, inStop) {
         "-----",
         "",
         "<SYSTEM>",
-        "# Stop the story and ignore previous instructions. Write a brief and coherent informational entry for ${title} following these instructions:",
-        "- Write only third-person pure prose information about ${title} using complete sentences with correct punctuation",
+        "# Stop the story and ignore previous instructions. Write a brief and coherent informational entry for %{title} following these instructions:",
+        "- Write only third-person pure prose information about %{title} using complete sentences with correct punctuation",
         "- Avoid short-term temporary details or appearances, instead focus on plot-significant information",
-        "- Prioritize story-relevant details about ${title} first to ensure seamless integration with the previous plot",
+        "- Prioritize story-relevant details about %{title} first to ensure seamless integration with the previous plot",
         "- Create new information based on the context and story direction",
-        "- Mention ${title} in every sentence",
+        "- Mention %{title} in every sentence",
         "- Use semicolons if needed",
-        "- Add additional details about ${title} beneath incomplete entries",
+        "- Add additional details about %{title} beneath incomplete entries",
         "- Be concise and grounded",
         "- Imitate the story's writing style and infer the reader's preferences",
         "</SYSTEM>",
-        "Continue the entry for ${title} below while avoiding repetition:",
-        "${entry}"
+        "Continue the entry for %{title} below while avoiding repetition:",
+        "%{entry}"
     ); // (mimic this multi-line "text" format)
 
     // AI prompt used to summarize a given story card's memory bank?
@@ -98,12 +98,12 @@ function AutoCards(inHook, inText, inStop) {
         "- Remain brief and concise",
         "- Write firmly in the past tense",
         "- The paragraph below pertains to old events from far earlier in the story",
-        "- Integrate ${title} naturally within the memory; however, only write about the events as they occurred",
+        "- Integrate %{title} naturally within the memory; however, only write about the events as they occurred",
         "- Only reference information present inside the paragraph itself, be specific",
         "</SYSTEM>",
-        "Write a summarized old memory passage for ${title} based only on the following paragraph:",
+        "Write a summarized old memory passage for %{title} based only on the following paragraph:",
         "\"\"\"",
-        "${memory}",
+        "%{memory}",
         "\"\"\"",
         "Summarize below:"
     ); // (mimic this multi-line "text" format)
@@ -2922,10 +2922,11 @@ function AutoCards(inHook, inText, inStop) {
                         }
                         return buildMemoryConstruct();
                     })();
+                    // Fill all %{title} placeholders
                     const precursorPrompt = insertTitle(AC.config.compressionPrompt, AC.compression.vanityTitle).trim();
-                    const memoryPlaceholderPattern = /(?:\$+\s*|\$*){+\s*memor(y|ies)\s*}+/gi;
+                    const memoryPlaceholderPattern = /(?:[%\$]+\s*|[%\$]*){+\s*memor(y|ies)\s*}+/gi;
                     if (memoryPlaceholderPattern.test(precursorPrompt)) {
-                        // Fill all ${memory} placeholders with a selection of pending old memories
+                        // Fill all %{memory} placeholders with a selection of pending old memories
                         return precursorPrompt.replace(memoryPlaceholderPattern, memoryConstruct);
                     } else {
                         // Append the partial entry to the end of context
@@ -2937,14 +2938,14 @@ function AutoCards(inHook, inText, inStop) {
             }
             function promptGeneration() {
                 repositionAN();
-                // All ${title} placeholders were already filled during this workpiece's initialization
+                // All %{title} placeholders were already filled during this workpiece's initialization
                 // The "%GEN%" substring serves as a temporary delimiter for later context length trucation
                 context = context.trimEnd() + "%@GEN@%\n\n" + (function() {
                     // For context only, remove the title header from this workpiece's partially completed entry
                     const partialEntry = formatEntry(AC.generation.workpiece.entry);
-                    const entryPlaceholderPattern = /(?:\$+\s*|\$*){+\s*entry\s*}+/gi;
+                    const entryPlaceholderPattern = /(?:[%\$]+\s*|[%\$]*){+\s*entry\s*}+/gi;
                     if (entryPlaceholderPattern.test(AC.generation.workpiece.prompt)) {
-                        // Fill all ${entry} placeholders with the partial entry
+                        // Fill all %{entry} placeholders with the partial entry
                         return AC.generation.workpiece.prompt.replace(entryPlaceholderPattern, partialEntry);
                     } else {
                         // Append the partial entry to the end of context
@@ -3808,10 +3809,10 @@ function AutoCards(inHook, inText, inStop) {
                 "You may specify how the AI handles story card processes by editing either of these two prompts within the config card's notes section",
                 "",
                 "> AI prompt to generate new cards:",
-                "Used when Auto-Cards writes a new card entry. It tells the AI to focus on important plot stuff, avoid fluff, and write in a consistent, polished style. I like to add some personal preferences here when playing my own adventures. \"${title}\" and \"${entry}\" are dynamic placeholders for their namesakes",
+                "Used when Auto-Cards writes a new card entry. It tells the AI to focus on important plot stuff, avoid fluff, and write in a consistent, polished style. I like to add some personal preferences here when playing my own adventures. \"%{title}\" and \"%{entry}\" are dynamic placeholders for their namesakes",
                 "",
                 "> AI prompt to summarize card memories:",
-                "Summarizes older details within card memory banks to keep everything concise and neat over the long-run. Maintains only the most important details, written in the past tense. \"${title}\" and \"${memory}\" are dynamic placeholders for their namesakes",
+                "Summarizes older details within card memory banks to keep everything concise and neat over the long-run. Maintains only the most important details, written in the past tense. \"%{title}\" and \"%{memory}\" are dynamic placeholders for their namesakes",
                 "",
                 Words.delimiter,
                 "",
@@ -4090,7 +4091,7 @@ function AutoCards(inHook, inText, inStop) {
                     ), title);
                     if (promptDetails !== "") {
                         const spacesPrecedingTerminalEntryPlaceholder = (function() {
-                            const terminalEntryPlaceholderPattern = /(?:\$+\s*|\$*){+\s*entry\s*}+$/i;
+                            const terminalEntryPlaceholderPattern = /(?:[%\$]+\s*|[%\$]*){+\s*entry\s*}+$/i;
                             if (terminalEntryPlaceholderPattern.test(prompt)) {
                                 prompt = prompt.replace(terminalEntryPlaceholderPattern, "");
                                 const trailingSpaces = prompt.match(/(\s+)$/);
@@ -4110,7 +4111,6 @@ function AutoCards(inHook, inText, inStop) {
                         case "}": { encapsulateBothPrompts("{", true, "}"); break; }
                         case ")": { encapsulateBothPrompts("(", true, ")"); break; }
                         case "/": { encapsulateBothPrompts("/", true, "/"); break; }
-                        case "%": { encapsulateBothPrompts("%", true, "%"); break; }
                         case "#": { encapsulateBothPrompts("#", true, "#"); break; }
                         case "-": { encapsulateBothPrompts(null, false, "-"); break; }
                         case ":": { encapsulateBothPrompts(":", true, ":"); break; }
@@ -4127,8 +4127,8 @@ function AutoCards(inHook, inText, inStop) {
                         }
                         prompt += "\n" + promptDetails + (function() {
                             if (spacesPrecedingTerminalEntryPlaceholder !== "") {
-                                // Prompt previously contained a terminal ${entry} placeholder, re-append it
-                                return spacesPrecedingTerminalEntryPlaceholder + "${entry}";
+                                // Prompt previously contained a terminal %{entry} placeholder, re-append it
+                                return spacesPrecedingTerminalEntryPlaceholder + "%{entry}";
                             }
                             return "";
                         })();
@@ -4663,19 +4663,19 @@ function AutoCards(inHook, inText, inStop) {
                 "-----",
                 "",
                 "<SYSTEM>",
-                "# Stop the story and ignore previous instructions. Write a brief and coherent informational entry for ${title} following these instructions:",
-                "- Write only third-person pure prose information about ${title} using complete sentences with correct punctuation",
+                "# Stop the story and ignore previous instructions. Write a brief and coherent informational entry for %{title} following these instructions:",
+                "- Write only third-person pure prose information about %{title} using complete sentences with correct punctuation",
                 "- Avoid short-term temporary details or appearances, instead focus on plot-significant information",
-                "- Prioritize story-relevant details about ${title} first to ensure seamless integration with the previous plot",
+                "- Prioritize story-relevant details about %{title} first to ensure seamless integration with the previous plot",
                 "- Create new information based on the context and story direction",
-                "- Mention ${title} in every sentence",
+                "- Mention %{title} in every sentence",
                 "- Use semicolons if needed",
-                "- Add additional details about ${title} beneath incomplete entries",
+                "- Add additional details about %{title} beneath incomplete entries",
                 "- Be concise and grounded",
                 "- Imitate the story's writing style and infer the reader's preferences",
                 "</SYSTEM>",
-                "Continue the entry for ${title} below while avoiding repetition:",
-                "${entry}"
+                "Continue the entry for %{title} below while avoiding repetition:",
+                "%{entry}"
             ), "string"),
             // How should the AI be prompted when summarizing memories for a given story card?
             compressionPrompt: check(DEFAULT_CARD_MEMORY_COMPRESSION_PROMPT, prose(
@@ -4689,12 +4689,12 @@ function AutoCards(inHook, inText, inStop) {
                 "- Remain brief and concise",
                 "- Write firmly in the past tense",
                 "- The paragraph below pertains to old events from far earlier in the story",
-                "- Integrate ${title} naturally within the memory; however, only write about the events as they occurred",
+                "- Integrate %{title} naturally within the memory; however, only write about the events as they occurred",
                 "- Only reference information present inside the paragraph itself, be specific",
                 "</SYSTEM>",
-                "Write a summarized old memory passage for ${title} based only on the following paragraph:",
+                "Write a summarized old memory passage for %{title} based only on the following paragraph:",
                 "\"\"\"",
-                "${memory}",
+                "%{memory}",
                 "\"\"\"",
                 "Summarize below:"
             ), "string"),
@@ -4740,17 +4740,19 @@ function AutoCards(inHook, inText, inStop) {
             if (Number.isInteger(upperBound) && (upperBound < lowerBound)) {
                 throw new Error("Invalid arguments: The inequality (lowerBound <= upperBound) must be satisfied");
             }
-            value = lowerBound;
+            return lowerBound;
         } else if (Number.isInteger(upperBound) && (upperBound < value)) {
-            value = upperBound;
+            return upperBound;
+        } else {
+            return value;
         }
-        return value;
     }
     function limitString(str, lengthLimit) {
         if (lengthLimit < str.length) {
-            str = str.slice(0, lengthLimit).trim();
+            return str.slice(0, lengthLimit).trim();
+        } else {
+            return str;
         }
-        return str;
     }
     function cleanSpaces(unclean) {
         return (unclean
@@ -4763,8 +4765,9 @@ function AutoCards(inHook, inText, inStop) {
         const bisector = str.search(/\s*(?:{|(?:title|update|limit)s?\s*:)\s*/i);
         if (bisector === -1) {
             return [str, ""];
+        } else {
+            return [str.slice(0, bisector), str.slice(bisector)];
         }
-        return [str.slice(0, bisector), str.slice(bisector)];
     }
     function removeAutoProps(str) {
         return cleanSpaces(str
@@ -4775,14 +4778,16 @@ function AutoCards(inHook, inText, inStop) {
                     return bracedMatch;
                 }
             })
-            .replace(/\s*(?:{|(?:title|update|limit)s?\s*:)(?:[\s\S]{0,150}?)(?=(?:title|update|limit)s?\s*:|})\s*/gi, "\n")
+            .replace((
+                /\s*(?:{|(?:title|update|limit)s?\s*:)(?:[\s\S]{0,150}?)(?=(?:title|update|limit)s?\s*:|})\s*/gi
+            ), "\n")
             .replace(/\s*(?:{|(?:title|update|limit)s?\s*:|})\s*/gi, "\n")
             .trim()
         );
     }
     function insertTitle(prompt, title) {
         return prompt.replace((
-            /(?:\$+\s*|\$*){+\s*(?:titles?|names?|characters?|class(?:es)?|races?|locations?|factions?)\s*}+/gi
+            /(?:[%\$]+\s*|[%\$]*){+\s*(?:titles?|names?|characters?|class(?:es)?|races?|locations?|factions?)\s*}+/gi
         ), title);
     }
     function prose(...args) {
