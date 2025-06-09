@@ -1,1 +1,1 @@
-[output.js](../../../src/output.js)
+### Use this: [output.js](../../../src/output.js)
