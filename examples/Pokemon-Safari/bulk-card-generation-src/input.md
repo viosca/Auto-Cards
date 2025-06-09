@@ -1,1 +1,1 @@
-[input.js](Auto-Cards/src/input.js)
+[input.js](../src/input.js)
