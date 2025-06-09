@@ -1,1 +1,1 @@
-[input.js](../../../src/input.js)
+# Use this: [input.js](../../../src/input.js)
