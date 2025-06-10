@@ -34,7 +34,7 @@ modifier(text);
 ```
 8. Select the `Context` tab on the left
 9. Delete all code within said tab
-10. Copy and paste the following code into empty `Context` tab:
+10. Copy and paste the following code into your empty `Context` tab:
 ```javascript
 // Your "Context" tab should look like this
 const modifier = (text) => {
