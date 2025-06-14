@@ -62,12 +62,20 @@ function AutoCards(inHook, inText, inStop) {
     const DEFAULT_DO_LSI_V2 = false
     // (true or false)
 
+    const DEFAULT_SC_CONTAINERIZE = true
+    const DEFAULT_SC_CONTAINER_OPEN = "{ Story card: "
+    const DEFAULT_SC_CONTAINER_CLOSE = "\n}"
+
     // Should the "Debug Data" story card be visible?
     const DEFAULT_SHOW_DEBUG_DATA = false
+    // Should the "Debug Data" story card be visible?
+    const DEFAULT_SHOW_DEBUG_SC_RAWAI_ENTRY = false
+    // Should the "Debug Data" story card be visible?
+    const DEFAULT_SHOW_DEBUG_SC_RAWAI_MEMORY = false
     // (true or false)
 
     // AI prompt used to generate new story card entries?
-    const DEFAULT_CARD_GENERATION_PROMPT = prose(
+    const DEFAULT_CARD_GENERATION_PROMPT_saved = prose(
         "-----",
         "",
         "<SYSTEM>",
@@ -85,6 +93,42 @@ function AutoCards(inHook, inText, inStop) {
         "Continue the entry for %{title} below while avoiding repetition:",
         "%{entry}"
     ); // (mimic this multi-line "text" format)
+    
+    // AI prompt used to generate new story card entries?
+    const DEFAULT_CARD_GENERATION_PROMPT = 
+`-----
+
+<SYSTEM>
+# Stop the story and ignore previous instructions. Write a brief and coherent informational entry for %{title} following these instructions:
+- High information/token density is the key.
+- Be concise and grounded.
+- If information is unknown but can be reasonably assumed from the story, use that, or write unknown.
+- For descriptions, write only third-person imperative statements assuming the subject of %{title}; Use pronouns only if needed.
+- Add additional, non repetitive, details beneath incomplete entries
+- Determine the type of %{title} as one of character, location, or thing.
+- Select the appropriate template below, fill in the {placeholders} in order for that type and strip the // comments.
+
+Template: character // A communicating entity.
+ Character.
+- {vitals} // vital stastics, i.e. height, weight, age, tone, hair, eyes, etc.
+- {appearance} // Only characters typical attire. 
+- Archetypes: {character archetypes} // character archetypes i.e. a list of fitting common types.
+- Traits: {traits} // i.e. a list of personality traits and tics.
+- Motivations: {motivations} // i.e. a list of internal character motivations.
+- {description}
+
+Template: location // A place (could be metaphorical if appropriate)
+- Location.
+- {a_brief_description}
+
+Template: thing // neither a character nor location, i.e. an important story object or fact
+- Thing.
+- {a_brief_description}
+
+</SYSTEM>
+Continue the entry for %{title} below while avoiding repetition of previous placeholders, data, and lists:
+%{entry}
+`;
 
     // AI prompt used to summarize a given story card's memory bank?
     const DEFAULT_CARD_MEMORY_COMPRESSION_PROMPT = prose(
@@ -523,7 +567,7 @@ function AutoCards(inHook, inText, inStop) {
         // If the deserialized state fails to match the following structure, fallback to defaults
         if (validate(ac, O.f({
             config: [
-                "doAC", "deleteAllAutoCards", "pinConfigureCard", "addCardCooldown", "bulletedListMode", "defaultEntryLimit", "defaultCardsDoMemoryUpdates", "defaultMemoryLimit", "memoryCompressionRatio", "ignoreAllCapsTitles", "readFromInputs", "minimumLookBackDistance", "LSIv2", "showDebugData", "generationPrompt", "compressionPrompt", "defaultCardType"
+                "doAC", "deleteAllAutoCards", "pinConfigureCard", "addCardCooldown", "bulletedListMode", "defaultEntryLimit", "defaultCardsDoMemoryUpdates", "defaultMemoryLimit", "memoryCompressionRatio", "ignoreAllCapsTitles", "readFromInputs", "minimumLookBackDistance", "LSIv2", "SCContainerize", "SCContainerOpen", "SCContainerClose", "showDebugData", "showDebugDataSCRawAIEntry", "showDebugDataSCRawAIMemory", "generationPrompt", "compressionPrompt", "defaultCardType"
             ],
             signal: [
                 "emergencyHalt", "forceToggle", "overrideBans", "swapControlCards", "recheckRetryOrErase", "maxChars", "outputReplacement", "upstreamError"
@@ -1873,11 +1917,13 @@ function AutoCards(inHook, inText, inStop) {
                     if (AC.config.generationPrompt !== cfg) {
                         notify("Changes to your card generation prompt were successfully saved");
                         AC.config.generationPrompt = cfg;
+                        //logEvent(cfg);
                     }
                     cfg = extractDescSetting(1);
                     if (AC.config.compressionPrompt !== cfg) {
                         notify("Changes to your card memory compression prompt were successfully saved");
                         AC.config.compressionPrompt = cfg;
+                        //logEvent(cfg);
                     }
                     if (bansOverwritten) {
                         overrideBans();
@@ -1936,7 +1982,7 @@ function AutoCards(inHook, inText, inStop) {
                     AC.signal.outputReplacement = Words.guide;
                 }
                 let cfg;
-                if (parseConfig("pinthisconfigcardnearthetop", false, "pinConfigureCard")) {
+                if (parseConfig("pinthisconfigcardnearthetop", "boolean", "pinConfigureCard")) {
                     if (cfg) {
                         pinAndSortCards(configureCard);
                         notify("The settings config card will now be pinned near the top of your story cards list");
@@ -1949,7 +1995,7 @@ function AutoCards(inHook, inText, inStop) {
                         notify("The settings config card will no longer be pinned near the top of your story cards list");
                     }
                 }
-                if (parseConfig("minimumturnscooldownfornewcards", true, "addCardCooldown")) {
+                if (parseConfig("minimumturnscooldownfornewcards", "number", "addCardCooldown")) {
                     const oldCooldown = AC.config.addCardCooldown;
                     AC.config.addCardCooldown = validateCooldown(cfg);
                     if (!isPendingGeneration() && !isAwaitingGeneration() && (0 < AC.generation.cooldown)) {
@@ -1995,53 +2041,53 @@ function AutoCards(inHook, inText, inStop) {
                         break; }
                     }
                 }
-                if (parseConfig("newcardsuseabulletedlistformat", false, "bulletedListMode")) {
+                if (parseConfig("newcardsuseabulletedlistformat", "boolean", "bulletedListMode")) {
                     if (cfg) {
                         notify("New card entries will be generated using a bulleted list format");
                     } else {
                         notify("New card entries will be generated using a pure prose format");
                     }
                 }
-                if (parseConfig("maximumentrylengthfornewcards", true, "defaultEntryLimit")) {
+                if (parseConfig("maximumentrylengthfornewcards", "number", "defaultEntryLimit")) {
                     AC.config.defaultEntryLimit = validateEntryLimit(cfg);
                     notify(
                         "New card entries will be limited to " + AC.config.defaultEntryLimit + " characters of generated text"
                     );
                 }
-                if (parseConfig("newcardsperformmemoryupdates", false, "defaultCardsDoMemoryUpdates")) {
+                if (parseConfig("newcardsperformmemoryupdates", "boolean", "defaultCardsDoMemoryUpdates")) {
                     if (cfg) {
                         notify("Newly constructed cards will begin with memory updates enabled by default");
                     } else {
                         notify("Newly constructed cards will begin with memory updates disabled by default");
                     }
                 }
-                if (parseConfig("cardmemorybankpreferredlength", true, "defaultMemoryLimit")) {
+                if (parseConfig("cardmemorybankpreferredlength", "number", "defaultMemoryLimit")) {
                     AC.config.defaultMemoryLimit = validateMemoryLimit(cfg);
                     notify(
                         "Newly constructed cards will begin with their memory bank length preference set to " + AC.config.defaultMemoryLimit + " characters of text"
                     );
                 }
-                if (parseConfig("memorysummarycompressionratio", true, "memoryCompressionRatio")) {
+                if (parseConfig("memorysummarycompressionratio", "number", "memoryCompressionRatio")) {
                     AC.config.memoryCompressionRatio = validateMemCompRatio(cfg);
                     notify(
                         "Freshly summarized card memory banks will be approximately " + (AC.config.memoryCompressionRatio / 10) + "x shorter than their originals"
                     );
                 }
-                if (parseConfig("excludeallcapsfromtitledetection", false, "ignoreAllCapsTitles")) {
+                if (parseConfig("excludeallcapsfromtitledetection", "boolean", "ignoreAllCapsTitles")) {
                     if (cfg) {
                         notify("All-caps text will be ignored during title detection to help prevent bad cards");
                     } else {
                         notify("All-caps text may be considered during title detection processes");
                     }
                 }
-                if (parseConfig("alsodetecttitlesfromplayerinputs", false, "readFromInputs")) {
+                if (parseConfig("alsodetecttitlesfromplayerinputs", "boolean", "readFromInputs")) {
                     if (cfg) {
                         notify("Titles may be detected from player Do/Say/Story action inputs");
                     } else {
                         notify("Title detection will skip player Do/Say/Story action inputs for grammatical leniency");
                     }
                 }
-                if (parseConfig("minimumturnsagefortitledetection", true, "minimumLookBackDistance")) {
+                if (parseConfig("minimumturnsagefortitledetection", "number", "minimumLookBackDistance")) {
                     AC.config.minimumLookBackDistance = validateMinLookBackDist(cfg);
                     notify(
                         "Titles and names mentioned in your story may become eligible for future card generation attempts once they are at least " + AC.config.minimumLookBackDistance + " actions old"
@@ -2063,7 +2109,16 @@ function AutoCards(inHook, inText, inStop) {
                         }
                     }
                 }
-                if (parseConfig("logdebugdatainaseparatecard" , false, "showDebugData")) {
+                if (parseConfig("usecustomstorycardcontainer", "boolean", "SCContainerize")) { 
+                    notify("Using custom story card container: \"" + cfg + "\"");
+                }
+                if (parseConfig("customcontaineropenstring", "string", "SCContainerOpen")) { 
+                    notify("The custom container opening string has been set to: \"" + cfg + "\"");
+                }
+                if (parseConfig("customcontainerclosingstring", "string", "SCContainerClose")) { 
+                    notify("The custom container closing string has been set to: \"" + cfg + "\"");
+                }
+                if (parseConfig("logdebugdatainaseparatecard" , "boolean", "showDebugData")) {
                     if (data === null) {
                         if (cfg) {
                             notify("State may now be viewed within the \"Debug Data\" story card");
@@ -2076,6 +2131,13 @@ function AutoCards(inHook, inText, inStop) {
                         notify("Debug mode has been disabled");
                     }
                 }
+                if (parseConfig("lograwaientrydata" , "boolean", "showDebugDataSCRawAIEntry")) {
+                    notify("Logging raw ai entry data has been set to: \"" + cfg + "\"");
+                }
+                if (parseConfig("lograwaimemorydata" , "boolean", "showDebugDataSCRawAIMemory")) {
+                    notify("Logging raw ai memory data has been set to: \"" + cfg + "\"");
+                }
+
                 if ((settings.disableautocards === true) && (AC.signal.forceToggle !== true)) {
                     disableAutoCards();
                     break;
@@ -2083,22 +2145,23 @@ function AutoCards(inHook, inText, inStop) {
                     // Apply the new card entry and proceed to implement Auto-Cards onContext
                     configureCard.entry = getConfigureCardEntry();
                 }
-                function parseConfig(settingsKey, isNumber, configKey) {
+
+                function parseConfig(settingsKey, expectedType, configKey) {
                     cfg = settings[settingsKey];
-                    if (isNumber) {
-                        return checkConfig("number");
-                    } else if (!checkConfig("boolean")) {
-                        return false;
+                    if (checkConfig(expectedType)) { // Use expectedType for type check
+                        AC.config[configKey] = cfg;
+                        return true;
                     }
-                    AC.config[configKey] = cfg;
+                    return false; // Return false if type doesn't match or config unchanged
+
                     function checkConfig(type) {
                         return ((typeof cfg === type) && (
                             (notEmptyObj(oldConfig) && (oldConfig[configKey] !== cfg))
                             || (AC.config[configKey] !== cfg)
                         ));
                     }
-                    return true;
                 }
+
             }
             if (AC.signal.forceToggle === false) {
                 disableAutoCards();
@@ -3039,6 +3102,10 @@ function AutoCards(inHook, inText, inStop) {
                 }
             } else if (isPendingGeneration()) {
                 const textClone = prettifyEmDashes(text);
+                
+                if (AC.config.showDebugDataSCRawAIEntry) {
+                    logEvent("Raw AI Output (Card Generation): " + textClone); //
+                }
                 AC.chronometer.amnesia = 0;
                 AC.generation.completed++;
                 const generationsRemaining = (function() {
@@ -3163,7 +3230,7 @@ function AutoCards(inHook, inText, inStop) {
                         type: AC.generation.workpiece.type,
                         title: AC.generation.workpiece.title,
                         keys: AC.generation.workpiece.keys,
-                        entry: (function() {
+                        entry: Internal.wrapSCContainer((function() {
                             if (!AC.config.bulletedListMode) {
                                 return AC.generation.workpiece.entry;
                             }
@@ -3203,7 +3270,7 @@ function AutoCards(inHook, inText, inStop) {
                                 sentences.splice(i, 1);
                             }
                             return limitString(AC.generation.workpiece.entry, 2000);
-                        })(),
+                        })()),
                         description: AC.generation.workpiece.description,
                     }), newCardIndex());
                     AC.generation.cooldown = AC.config.addCardCooldown;
@@ -3301,7 +3368,7 @@ function AutoCards(inHook, inText, inStop) {
         }
         // Get an individual story card reference via titleKey
         function getAutoCard(titleKey) {
-            return Internal.getCard(card => card.entry.toLowerCase().startsWith("{title: " + titleKey + "}"));
+            return Internal.getCard(card => Internal.unwrapSCContainer(card.entry).toLowerCase().startsWith("{title: " + titleKey + "}"));
         }
         function buildMemoryConstruct() {
             return (AC.compression.oldMemoryBank
@@ -3392,7 +3459,7 @@ function AutoCards(inHook, inText, inStop) {
             );
         }
         function formatEntry(partialEntry) {
-            const cleanedEntry = cleanSpaces(partialEntry
+            const cleanedEntry = cleanSpaces(Internal.unwrapSCContainer(partialEntry)
                 .replace(/^{title:[\s\S]*?}/, "")
                 .replace(/[#><@*_~]/g, "")
                 .trim()
@@ -3435,7 +3502,12 @@ function AutoCards(inHook, inText, inStop) {
                 "> Also detect titles from player inputs: " + AC.config.readFromInputs,
                 "> Minimum turns age for title detection: " + AC.config.minimumLookBackDistance,
                 "> Use Live Script Interface v2: " + (AC.config.LSIv2 !== null),
-                "> Log debug data in a separate card: " + AC.config.showDebugData
+                "> Use custom story card container: " + AC.config.SCContainerize,
+                "> Custom container open string: " + stringifyObject(AC.config.SCContainerOpen),
+                "> Custom container close string: " + stringifyObject(AC.config.SCContainerClose),
+                "> Log debug data in a separate card: " + AC.config.showDebugData,
+                "> Log RAW AI entry data: " + AC.config.showDebugDataSCRawAIEntry,
+                "> Log RAW AI memory data: " + AC.config.showDebugDataSCRawAIMemory
             );
         }
         function getConfigureCardDescription() {
@@ -4011,6 +4083,51 @@ function AutoCards(inHook, inText, inStop) {
         // Some exported API functions are internally reused by AutoCards
         // Recursively calling AutoCards().API is computationally wasteful
         // AutoCards uses this collection of static methods as an internal proxy
+
+        static escapeRegExp(str) { //
+            return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); //
+        }
+
+        static wrapSCContainer(content, force = false) {
+            //log("wrapSCContainer in:content: ", content);
+            if (AC.config.SCContainerize || force) { //
+                let wrappedContent = AC.config.SCContainerOpen + content + AC.config.SCContainerClose; //
+                //log("wrapSCContainer wrapped out:content: ", wrappedContent);
+                return wrappedContent; //
+            }
+            //log("wrapSCContainer not wrapped out:content: ", content);
+            return content; //
+        }
+
+        static unwrapSCContainer(content, force = false) {
+            //log("unwrapSCContainer in:content: ", content);
+            if (AC.config.SCContainerize || force) { //
+                const open = Internal.escapeRegExp(AC.config.SCContainerOpen); //
+                const close = Internal.escapeRegExp(AC.config.SCContainerClose); //
+
+                // Build regex for opening and closing tags, ignoring whitespace and case
+                const openRegex = new RegExp(`^\\s*${open}\\s*`, 'i'); //
+                const closeRegex = new RegExp(`\\s*${close}\\s*$`, 'i'); //
+
+                if (openRegex.test(content)) { // Always remove the open if present.
+                    // Remove opening tag
+                    let unwrappedContent = content.replace(openRegex, ''); //
+                    if (closeRegex.test(content)) {
+                        // Only remove the close if both open and close are present.
+                        // we dont want to accidentally remove the close on things like {title:} if there's a user error in the SC.
+                        unwrappedContent = unwrappedContent.replace(closeRegex, ''); //
+                    }
+                    //log("unwrapSCContainer unwrapped out:content: ", unwrappedContent);
+                    return unwrappedContent; //
+                }
+            }
+            //log("unwrapSCContainer ignored content: ", content);
+            return content; //
+        }
+        static sizeofSCWrapper() {
+            return AC.config.SCContainerOpen.length + AC.config.SCContainerClose.length;
+        }
+
         static generateCard(request, predefinedPair = ["", ""]) {
             // Method call guide:
             // Internal.generateCard({
@@ -4056,7 +4173,7 @@ function AutoCards(inHook, inText, inStop) {
                             }
                         })() + " ");
                     }
-                })()), 2000),
+                })()), 2000 - Internal.sizeofSCWrapper()),
                 description: limitString((
                     (function() {
                         const description = limitString((request.description ?? "").toString().trim(), 9900);
@@ -4656,8 +4773,18 @@ function AutoCards(inHook, inText, inStop) {
                     return null;
                 }
             })(),
+            // Should story cards be containerized?
+            SCContainerize: check(DEFAULT_SC_CONTAINERIZE, false),
+            // Provide the opening and closing delimiters for story cards.
+            SCContainerOpen: check(DEFAULT_SC_CONTAINER_OPEN, "", "string"),
+            SCContainerClose: check(DEFAULT_SC_CONTAINER_CLOSE, "", "string"),
+            
             // Should the debug data card be visible?
             showDebugData: check(DEFAULT_SHOW_DEBUG_DATA, false),
+            // Debug the raw AI story card output.
+            showDebugDataSCRawAIEntry: check(DEFAULT_SHOW_DEBUG_SC_RAWAI_ENTRY, false),
+            // Debug the raw AI memory output.
+            showDebugDataSCRawAIMemory: check(DEFAULT_SHOW_DEBUG_SC_RAWAI_MEMORY, false),
             // How should the AI be prompted when generating new story card entries?
             generationPrompt: check(DEFAULT_CARD_GENERATION_PROMPT, prose(
                 "-----",
@@ -4744,14 +4871,14 @@ function AutoCards(inHook, inText, inStop) {
         } else if (Number.isInteger(upperBound) && (upperBound < value)) {
             return upperBound;
         } else {
-            return value;
+        return value;
         }
     }
     function limitString(str, lengthLimit) {
         if (lengthLimit < str.length) {
             return str.slice(0, lengthLimit).trim();
         } else {
-            return str;
+        return str;
         }
     }
     function cleanSpaces(unclean) {
@@ -4766,7 +4893,7 @@ function AutoCards(inHook, inText, inStop) {
         if (bisector === -1) {
             return [str, ""];
         } else {
-            return [str.slice(0, bisector), str.slice(bisector)];
+        return [str.slice(0, bisector), str.slice(bisector)];
         }
     }
     function removeAutoProps(str) {
