@@ -23,11 +23,21 @@ function AutoCards(inHook, inText, inStop) {
     // (true or false)
 
     // Minimum number of turns in between automatic card generation events?
-    const DEFAULT_CARD_CREATION_COOLDOWN = 22
+    const DEFAULT_CARD_CREATION_COOLDOWN = 9999
     // (0 to 9999)
 
     // Use a bulleted list format for newly generated card entries?
-    const DEFAULT_USE_BULLETED_LIST_MODE = true
+    const DEFAULT_USE_BULLETED_LIST_MODE = false
+    // (true or false)
+
+    // Don't edit/modify the generation prompt sent to the AI.
+    // This makes it possible to send JavaScript to the AI.
+    const DEFAULT_USE_RAWAI_PROMPT_MODE = true
+    // (true or false)
+
+    // Don't edit/modify the AI response(s)?
+    // This makes it possible to define the format of the response in the template.bulleted lists.
+    const DEFAULT_USE_RAWAI_RESPONSE_MODE = true
     // (true or false)
 
     // Maximum allowed length for newly generated story card entries?
@@ -62,20 +72,23 @@ function AutoCards(inHook, inText, inStop) {
     const DEFAULT_DO_LSI_V2 = false
     // (true or false)
 
+    // Variables affecting containers.
     const DEFAULT_SC_CONTAINERIZE = true
     const DEFAULT_SC_CONTAINER_OPEN = "{ Story card: "
     const DEFAULT_SC_CONTAINER_CLOSE = "\n}"
+    const DEFAULT_SC_CONTAINER_AI_END = "SC_END"
 
     // Should the "Debug Data" story card be visible?
     const DEFAULT_SHOW_DEBUG_DATA = false
-    // Should the "Debug Data" story card be visible?
-    const DEFAULT_SHOW_DEBUG_SC_RAWAI_ENTRY = false
-    // Should the "Debug Data" story card be visible?
+    // Display the card raw prompt and response?
+    const DEFAULT_SHOW_DEBUG_SC_RAWAI_ENTRY = true
+   // Display the memory raw prompt and response (not implemented yet)?
+ 
     const DEFAULT_SHOW_DEBUG_SC_RAWAI_MEMORY = false
     // (true or false)
 
     // AI prompt used to generate new story card entries?
-    const DEFAULT_CARD_GENERATION_PROMPT_saved = prose(
+    const DEFAULT_CARD_GENERATION_PROMPT_VANILLA= prose(
         "-----",
         "",
         "<SYSTEM>",
@@ -93,40 +106,72 @@ function AutoCards(inHook, inText, inStop) {
         "Continue the entry for %{title} below while avoiding repetition:",
         "%{entry}"
     ); // (mimic this multi-line "text" format)
+
     
     // AI prompt used to generate new story card entries?
-    const DEFAULT_CARD_GENERATION_PROMPT = 
+    const DEFAULT_CARD_GENERATION_PROMPT =
 `-----
 
-<SYSTEM>
-# Stop the story and ignore previous instructions. Write a brief and coherent informational entry for %{title} following these instructions:
-- High information/token density is the key.
-- Be concise and grounded.
-- If information is unknown but can be reasonably assumed from the story, use that, or write unknown.
-- For descriptions, write only third-person imperative statements assuming the subject of %{title}; Use pronouns only if needed.
-- Add additional, non repetitive, details beneath incomplete entries
-- Determine the type of %{title} as one of character, location, or thing.
-- Select the appropriate template below, fill in the {placeholders} in order for that type and strip the // comments.
-
-Template: character // A communicating entity.
- Character.
-- {vitals} // vital stastics, i.e. height, weight, age, tone, hair, eyes, etc.
-- {appearance} // Only characters typical attire. 
-- Archetypes: {character archetypes} // character archetypes i.e. a list of fitting common types.
-- Traits: {traits} // i.e. a list of personality traits and tics.
-- Motivations: {motivations} // i.e. a list of internal character motivations.
-- {description}
-
-Template: location // A place (could be metaphorical if appropriate)
+[## AI, stop the story and ignore previous story AI instructions.
+#! This is JellyFish (JFSH), a block structured AI pseudo language that is a blend of C/C++/JavaScript/JSON/Kotlin. AI, just go with the flow.
+# In JFSH, identifiers have meanings that the AI can use. They are like nouns and verbs. Comments also provide AI direction. Program flow provides the 'when'.
+class SCG { // Story Card Generator.
+    constructor (name) {
+        // Determine the type of "name" as Character, Location, or Thing. And call the appropropriate member function for that type.
+        this.type = typeof(name);
+        if (this.type == "character") {
+            this.entry = this.Character(name);
+        } elsif (this.type == "location") {
+            this.entry = this.Location(name);
+        } else {
+            this.entry = this.Thing(name);
+        }
+        this.sc_end = "SC_END"; // Remember to finish the entire entry with "SC_END".
+    }
+    Print () { console.log(this.entry); }
+	Character(name)  {
+		// From the current story or fanfiction universe and the character_template fill out the {Paceholders} and strip out the comments.
+        // High information/token density is the key. Be concise and grounded.
+        // If information is unknown but can be reasonably assumed from the story or fanfiction universe, use that, or create something reasonable. 
+        // For lists, write only brief third-person imperative items assuming the subject of "name". Use pronouns only if needed.
+        // For {description}, write only a very brief third-person imperative statement assuming the subject of "name". Use pronouns only if needed.
+        // Banned characters: do not generate double quotes.
+		let character_template = \`
+- Character: {Age}, {Gender}, {Pronouns}, {Occupation}.
+- Vitals: {vital_statsics}. // i.e. hair, eyes, height (double quotes forbidden, use decimal), weight, body tone, measurements, etc...
+- Archetypes: {character_archetypes}. // 1 or 2 archetypes.
+- Appearance: {typical_appearance}. // i.e. pure prose list, briefly their normal attire/style.
+- Traits: {personality_traits}. // i.e. pure prose list, briefly, intelligence, emotionality, humor.
+- Motivations: {motivations}. // i.e. pure prose list, briefly, key internal character motivators, if known.
+- {description}. // i.e. pure prose, 150 tokens max.
+- \${this.sc_end} // When the entry is complete, terminate it with this sentinel.
+\`;
+		return character_template;
+	}
+	Location(name)  {
+		// From the current story universe and the location_template fill out any {placeholders} and strip out the comments.
+		let location_template = \`
 - Location.
-- {a_brief_description}
-
-Template: thing // neither a character nor location, i.e. an important story object or fact
+- {description}. // i.e. 150 tokens max.
+- \${this.sc_end} // When the entry is complete, terminate it with this sentinel.
+\`;
+		return location_template;
+	}
+	Thing(name)  {
+		// From the current story universe and the thing_template fill out any {placeholders} and strip out the comments.
+		let thing_template = \`
 - Thing.
-- {a_brief_description}
+- {description}. // i.e. pure prose, 150 tokens max.
+- \${this.sc_end} // When the entry is complete, terminate it with this sentinel.
+\`;
+		return thing_template;
+	}
+}
+SCG("%{title}").Print(); // Call the constructor which generates the output.
 
-</SYSTEM>
-Continue the entry for %{title} below while avoiding repetition of previous placeholders, data, and lists:
+Continue the entry for %{title} below while avoiding repetition of previous placeholders, descriptions, and lists. When the entire entry is done, output SCG.sc_end:
+]
+
 %{entry}
 `;
 
@@ -567,7 +612,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
         // If the deserialized state fails to match the following structure, fallback to defaults
         if (validate(ac, O.f({
             config: [
-                "doAC", "deleteAllAutoCards", "pinConfigureCard", "addCardCooldown", "bulletedListMode", "defaultEntryLimit", "defaultCardsDoMemoryUpdates", "defaultMemoryLimit", "memoryCompressionRatio", "ignoreAllCapsTitles", "readFromInputs", "minimumLookBackDistance", "LSIv2", "SCContainerize", "SCContainerOpen", "SCContainerClose", "showDebugData", "showDebugDataSCRawAIEntry", "showDebugDataSCRawAIMemory", "generationPrompt", "compressionPrompt", "defaultCardType"
+                "doAC", "deleteAllAutoCards", "pinConfigureCard", "addCardCooldown", "bulletedListMode", "rawAIPromptMode", "rawAIResponseMode", "defaultEntryLimit", "defaultCardsDoMemoryUpdates", "defaultMemoryLimit", "memoryCompressionRatio", "ignoreAllCapsTitles", "readFromInputs", "minimumLookBackDistance", "LSIv2", "SCContainerize", "SCContainerOpen", "SCContainerClose", "SCContainerAIEnd", "showDebugData", "showDebugDataSCRawAIEntry", "showDebugDataSCRawAIMemory", "generationPrompt", "compressionPrompt", "defaultCardType"
             ],
             signal: [
                 "emergencyHalt", "forceToggle", "overrideBans", "swapControlCards", "recheckRetryOrErase", "maxChars", "outputReplacement", "upstreamError"
@@ -2048,6 +2093,20 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                         notify("New card entries will be generated using a pure prose format");
                     }
                 }
+                if (parseConfig("rawaipromptmode", "boolean", "rawAIPromptMode")) {
+                    if (cfg) {
+                        notify("AI card prompts will be sent unformatted");
+                    } else {
+                        notify("AI card prompts will be sent formatted");
+                    }
+                }
+                if (parseConfig("rawairesponsemode", "boolean", "rawAIResponseMode")) {
+                    if (cfg) {
+                        notify("AI card responses will be returned unformatted");
+                    } else {
+                        notify("AI card responses will be returned formatted");
+                    }
+                }
                 if (parseConfig("maximumentrylengthfornewcards", "number", "defaultEntryLimit")) {
                     AC.config.defaultEntryLimit = validateEntryLimit(cfg);
                     notify(
@@ -2117,6 +2176,9 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                 }
                 if (parseConfig("customcontainerclosingstring", "string", "SCContainerClose")) { 
                     notify("The custom container closing string has been set to: \"" + cfg + "\"");
+                }
+                if (parseConfig("customcontaineraiendsentinel", "string", "SCContainerAIEnd")) { 
+                    notify("The custom container AI end sentinel: \"" + cfg + "\"");
                 }
                 if (parseConfig("logdebugdatainaseparatecard" , "boolean", "showDebugData")) {
                     if (data === null) {
@@ -3089,7 +3151,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
             break; }
         case "output": {
             // AutoCards was called within the output modifier
-            const output = prettifyEmDashes(TEXT);
+            const output = AC.config.rawAIResponseMode ? TEXT : prettifyEmDashes(TEXT);
             if (0 < AC.chronometer.postpone) {
                 // Do not capture or replace any outputs during this turn
                 promoteAmnesia();
@@ -3101,28 +3163,55 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                     CODOMAIN.initialize(output);
                 }
             } else if (isPendingGeneration()) {
-                const textClone = prettifyEmDashes(text);
-                
                 if (AC.config.showDebugDataSCRawAIEntry) {
-                    logEvent("Raw AI Output (Card Generation): " + textClone); //
+                    logEvent("Raw AI Output (Card Generation): " + text); //
                 }
+                const textClone = AC.config.rawAIResponseMode ? text : prettifyEmDashes(text);
+                
                 AC.chronometer.amnesia = 0;
                 AC.generation.completed++;
                 const generationsRemaining = (function() {
-                    if (
-                        textClone.includes("\"")
+                    if (AC.config.rawAIResponseMode) {
+                        // We can suggest that the AI use an end sentinel when it's done with the entry,
+                        // BUT, there's no guarantee it will.
+                        // Escape the sentinel incase it contains any Rx chars.
+                        let endSentinelEscaped = Internal.escapeRegExp(AC.config.SCContainerAIEnd);
+
+                        const quoteRx = /(?<!\d)\"/; // Hunt for any quotes not preceded by a number, i.e. a measurement.
+
+                        // Match the sentinel and any leading ws and bullet followed by any character to the end of input.
+                        // Note, the sentinel has a bullet in the prompt to draw attention to it for the AI.
+                        const endSentinelRx = new RegExp(`\\s*[-*]?\\s*${endSentinelEscaped}\\s*.*`, 's');
+                        if (endSentinelRx.test(textClone)) {
+                            // The AI signaled the end of the entry.
+                            // Snip off the end of the response including the sentinel
+                            AC.generation.workpiece.entry += textClone.replace(endSentinelRx,"");
+                            logEvent("outputModifier: Doing a Skip to end for the end sentinel.", ); //
+                            return 0;
+                        } else if (quoteRx.test(textClone)) {
+                            // To build coherent entries, the AI must not attempt to continue the story
+                            logEvent("outputModifier: Saw a quote, doing a Skip"); //
+                            return skip(estimateRemainingGens());
+                        }
+                        // Otherwise, no sentinel, no double quotes, continue on...
+                    } else {
+                        if (
+                            textClone.includes("\"")
                         || /(?<=^|\s|—|\(|\[|{)sa(ys?|id)(?=\s|\.|\?|!|,|;|—|\)|\]|}|$)/i.test(textClone)
-                    ) {
-                        // Discard full outputs containing "say" or quotations
-                        // To build coherent entries, the AI must not attempt to continue the story
-                        return skip(estimateRemainingGens());
+                        ) {
+                            // Discard full outputs containing "say" or quotations
+                            // To build coherent entries, the AI must not attempt to continue the story
+                            logEvent("outputModifier: Doing a Skip"); //
+                            return skip(estimateRemainingGens());
+                        }
                     }
                     const oldSentences = (splitBySentences(formatEntry(AC.generation.workpiece.entry))
                         .map(sentence => sentence.trim())
                         .filter(sentence => (2 < sentence.length))
                     );
+                    // No response processing if rawAIResponseMode.
                     const seenSentences = new Set();
-                    const entryAddition = splitBySentences(textClone
+                    const entryAddition = AC.config.rawAIResponseMode ? textClone : splitBySentences(textClone
                         .replace(/[\*_~]/g, "")
                         .replace(/:+/g, "#")
                         .replace(/\s+/g, " ")
@@ -3152,32 +3241,39 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                         AC.generation.workpiece.entry += entryAddition;
                     }
                     if (AC.generation.workpiece.limit < AC.generation.workpiece.entry.length) {
-                        let exit = false;
                         let truncatedEntry = AC.generation.workpiece.entry.trimEnd();
-                        const sentences = splitBySentences(truncatedEntry);
-                        for (let i = sentences.length - 1; 0 <= i; i--) {
-                            if (!sentences[i].includes("\n")) {
-                                sentences.splice(i, 1);
-                                truncatedEntry = sentences.join("").trimEnd();
-                                if (truncatedEntry.length <= AC.generation.workpiece.limit) {
+                        // For raw mode, just limit the entry to prevent overflow.
+                        if (AC.config.rawAIResponseMode) {
+                            AC.generation.workpiece.entry = limitString(
+                                AC.generation.workpiece.entry, AC.generation.workpiece.limit
+                            );
+                        } else {
+                            let exit = false;
+                            const sentences = splitBySentences(truncatedEntry);
+                            for (let i = sentences.length - 1; 0 <= i; i--) {
+                                if (!sentences[i].includes("\n")) {
+                                    sentences.splice(i, 1);
+                                    truncatedEntry = sentences.join("").trimEnd();
+                                    if (truncatedEntry.length <= AC.generation.workpiece.limit) {
+                                        break;
+                                    }
+                                    continue;
+                                }
+                                // Lines only matter for initial entries provided via AutoCards().API.generateCard
+                                const lines = sentences[i].split("\n");
+                                for (let j = lines.length - 1; 0 <= j; j--) {
+                                    lines.splice(j, 1);
+                                    sentences[i] = lines.join("\n");
+                                    truncatedEntry = sentences.join("").trimEnd();
+                                    if (truncatedEntry.length <= AC.generation.workpiece.limit) {
+                                        // Exit from both loops
+                                        exit = true;
+                                        break;
+                                    }
+                                }
+                                if (exit) {
                                     break;
                                 }
-                                continue;
-                            }
-                            // Lines only matter for initial entries provided via AutoCards().API.generateCard
-                            const lines = sentences[i].split("\n");
-                            for (let j = lines.length - 1; 0 <= j; j--) {
-                                lines.splice(j, 1);
-                                sentences[i] = lines.join("\n");
-                                truncatedEntry = sentences.join("").trimEnd();
-                                if (truncatedEntry.length <= AC.generation.workpiece.limit) {
-                                    // Exit from both loops
-                                    exit = true;
-                                    break;
-                                }
-                            }
-                            if (exit) {
-                                break;
                             }
                         }
                         if (truncatedEntry.length < 150) {
@@ -3459,7 +3555,11 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
             );
         }
         function formatEntry(partialEntry) {
-            const cleanedEntry = cleanSpaces(Internal.unwrapSCContainer(partialEntry)
+            const unwrappedSC = Internal.unwrapSCContainer(partialEntry);
+            if (AC.config.rawAIPromptMode) {
+                return unwrappedSC;
+            }
+            const cleanedEntry = cleanSpaces(unwrappedSC
                 .replace(/^{title:[\s\S]*?}/, "")
                 .replace(/[#><@*_~]/g, "")
                 .trim()
@@ -3494,6 +3594,8 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                 "> Pin this config card near the top: " + AC.config.pinConfigureCard,
                 "> Minimum turns cooldown for new cards: " + AC.config.addCardCooldown,
                 "> New cards use a bulleted list format: " + AC.config.bulletedListMode,
+                "> Raw AI Prompt Mode: " + AC.config.rawAIPromptMode,
+                "> Raw AI Response Mode: " + AC.config.rawAIResponseMode,
                 "> Maximum entry length for new cards: " + AC.config.defaultEntryLimit,
                 "> New cards perform memory updates: " + AC.config.defaultCardsDoMemoryUpdates,
                 "> Card memory bank preferred length: " + AC.config.defaultMemoryLimit,
@@ -3505,6 +3607,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                 "> Use custom story card container: " + AC.config.SCContainerize,
                 "> Custom container open string: " + stringifyObject(AC.config.SCContainerOpen),
                 "> Custom container close string: " + stringifyObject(AC.config.SCContainerClose),
+                "> Custom container AI end sentinel: " + stringifyObject(AC.config.SCContainerAIEnd),
                 "> Log debug data in a separate card: " + AC.config.showDebugData,
                 "> Log RAW AI entry data: " + AC.config.showDebugDataSCRawAIEntry,
                 "> Log RAW AI memory data: " + AC.config.showDebugDataSCRawAIMemory
@@ -4162,6 +4265,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                 keys: predefinedPair[1] || buildKeys((request.keysStart ?? "").toString(), titleKeyPair.newKey),
                 entry: limitString("{title: " + title + "}" + cleanSpaces((function() {
                     const entry = (request.entryStart ?? "").toString().trim();
+                    //log("AC.generation.pending.push entry: ", entry);
                     if (entry === "") {
                         return "";
                     } else {
@@ -4206,6 +4310,8 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                     let promptDetails = insertTitle((
                         cleanSpaces((request.entryPromptDetails ?? "").toString().trim())
                     ), title);
+                    //log("request.prompt: ", prompt);
+                    //log("request.promptDetails: ", promptDetails);
                     if (promptDetails !== "") {
                         const spacesPrecedingTerminalEntryPlaceholder = (function() {
                             const terminalEntryPlaceholderPattern = /(?:[%\$]+\s*|[%\$]*){+\s*entry\s*}+$/i;
@@ -4750,6 +4856,10 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
             addCardCooldown: validateCooldown(DEFAULT_CARD_CREATION_COOLDOWN),
             // Use bulleted list mode for newly generated card entries?
             bulletedListMode: check(DEFAULT_USE_BULLETED_LIST_MODE),
+            // Use raw AI prompt mode?
+            rawAIPromptMode: check(DEFAULT_USE_RAWAI_PROMPT_MODE),
+            // Use raw AI prompt mode?
+            rawAIResponseMode: check(DEFAULT_USE_RAWAI_RESPONSE_MODE),
             // Maximum allowed length for newly generated story card entries?
             defaultEntryLimit: validateEntryLimit(DEFAULT_GENERATED_ENTRY_LIMIT),
             // Do newly generated cards have memory updates enabled by default?
@@ -4778,6 +4888,8 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
             // Provide the opening and closing delimiters for story cards.
             SCContainerOpen: check(DEFAULT_SC_CONTAINER_OPEN, "", "string"),
             SCContainerClose: check(DEFAULT_SC_CONTAINER_CLOSE, "", "string"),
+            // An End Sentinel the AI may use to trigger end of output.
+            SCContainerAIEnd: check(DEFAULT_SC_CONTAINER_AI_END, "", "string"),
             
             // Should the debug data card be visible?
             showDebugData: check(DEFAULT_SHOW_DEBUG_DATA, false),
