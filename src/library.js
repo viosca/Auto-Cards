@@ -76,7 +76,7 @@ function AutoCards(inHook, inText, inStop) {
     const DEFAULT_SC_CONTAINERIZE = true
     const DEFAULT_SC_CONTAINER_OPEN = "{ Story card: "
     const DEFAULT_SC_CONTAINER_CLOSE = "\n}"
-    const DEFAULT_SC_CONTAINER_AI_END = "SC_END"
+    const DEFAULT_SC_AI_END_SENTINEL = "SC_END"
 
     // Should the "Debug Data" story card be visible?
     const DEFAULT_SHOW_DEBUG_DATA = false
@@ -88,7 +88,7 @@ function AutoCards(inHook, inText, inStop) {
     // (true or false)
 
     // AI prompt used to generate new story card entries?
-    const DEFAULT_CARD_GENERATION_PROMPT_VANILLA= prose(
+    const DEFAULT_CARD_GENERATION_PROMPT_LEAH = prose(
         "-----",
         "",
         "<SYSTEM>",
@@ -117,59 +117,62 @@ function AutoCards(inHook, inText, inStop) {
 # In JFSH, identifiers have meanings that the AI can use. They are like nouns and verbs. Comments also provide AI direction. Program flow provides the 'when'.
 class SCG { // Story Card Generator.
     constructor (name) {
-        // Determine the type of "name" as Character, Location, or Thing. And call the appropropriate member function for that type.
+        // Determine the type of 'name' as Character, Location, or Thing. And call the appropropriate member function for that type.
         this.type = typeof(name);
-        if (this.type == "character") {
+        if (this.type == 'character') {
             this.entry = this.Character(name);
-        } elsif (this.type == "location") {
+        } elsif (this.type == 'location') {
             this.entry = this.Location(name);
         } else {
             this.entry = this.Thing(name);
         }
-        this.sc_end = "SC_END"; // Remember to finish the entire entry with "SC_END".
     }
     Print () { console.log(this.entry); }
+
+    // From the current story or fanfiction universe and the selected template, fill out the {Paceholders} and strip out the comments.
+    // High information/token density is the key. Be concise and grounded. Avoid stating the obvious.
+    // If information is unknown but can be reasonably assumed from the story or fanfiction universe, use that, or create something reasonable. 
+    // For lists, write only brief third-person imperative items assuming the subject of 'name'. Use pronouns only if needed.
+    // For {description}, write only a very brief third-person imperative statement assuming the subject of 'name'. Use pronouns only if needed.
+    // Banned characters: do not generate double quotes.
+    // When complete, generate the end sentinel: '%SC_SENTINEL%'.
+
 	Character(name)  {
-		// From the current story or fanfiction universe and the character_template fill out the {Paceholders} and strip out the comments.
-        // High information/token density is the key. Be concise and grounded.
-        // If information is unknown but can be reasonably assumed from the story or fanfiction universe, use that, or create something reasonable. 
-        // For lists, write only brief third-person imperative items assuming the subject of "name". Use pronouns only if needed.
-        // For {description}, write only a very brief third-person imperative statement assuming the subject of "name". Use pronouns only if needed.
-        // Banned characters: do not generate double quotes.
-		let character_template = \`
+		let character_template = 
+\`
 - Character: {Age}, {Gender}, {Pronouns}, {Occupation}.
-- Vitals: {vital_statsics}. // i.e. hair, eyes, height (double quotes forbidden, use decimal), weight, body tone, measurements, etc...
+- Vitals: {vital_statsics}. // i.e. hair, eyes, height (double quotes forbidden, use decimal), weight, body tone, measurements (just numbers and -'s), etc...
 - Archetypes: {character_archetypes}. // 1 or 2 archetypes.
 - Appearance: {typical_appearance}. // i.e. pure prose list, briefly their normal attire/style.
 - Traits: {personality_traits}. // i.e. pure prose list, briefly, intelligence, emotionality, humor.
 - Motivations: {motivations}. // i.e. pure prose list, briefly, key internal character motivators, if known.
-- {description}. // i.e. pure prose, 150 tokens max.
-- \${this.sc_end} // When the entry is complete, terminate it with this sentinel.
+- {description}. // i.e. pure prose, imperative, 200 characters max.
+%SC_SENTINEL% // When the entry is complete, generate this sentinel.
 \`;
 		return character_template;
 	}
 	Location(name)  {
-		// From the current story universe and the location_template fill out any {placeholders} and strip out the comments.
-		let location_template = \`
+		let location_template = 
+\`
 - Location.
-- {description}. // i.e. 150 tokens max.
-- \${this.sc_end} // When the entry is complete, terminate it with this sentinel.
+- {description}. // i.e. pure prose, imperative, 200 characters max.
+%SC_SENTINEL% // When the entry is complete, generate this sentinel.
 \`;
 		return location_template;
 	}
 	Thing(name)  {
-		// From the current story universe and the thing_template fill out any {placeholders} and strip out the comments.
-		let thing_template = \`
+		let thing_template = 
+\`
 - Thing.
-- {description}. // i.e. pure prose, 150 tokens max.
-- \${this.sc_end} // When the entry is complete, terminate it with this sentinel.
+- {description}. // i.e. pure prose, imperative, 200 characters max.
+%SC_SENTINEL% // When the entry is complete, generate this sentinel.
 \`;
 		return thing_template;
 	}
 }
 SCG("%{title}").Print(); // Call the constructor which generates the output.
 
-Continue the entry for %{title} below while avoiding repetition of previous placeholders, descriptions, and lists. When the entire entry is done, output SCG.sc_end:
+Continue the entry for %{title} below while avoiding repetition of previous placeholders, descriptions, and lists. When the entire entry is done, gemerate %SC_SENTINEL%:
 ]
 
 %{entry}
@@ -612,7 +615,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
         // If the deserialized state fails to match the following structure, fallback to defaults
         if (validate(ac, O.f({
             config: [
-                "doAC", "deleteAllAutoCards", "pinConfigureCard", "addCardCooldown", "bulletedListMode", "rawAIPromptMode", "rawAIResponseMode", "defaultEntryLimit", "defaultCardsDoMemoryUpdates", "defaultMemoryLimit", "memoryCompressionRatio", "ignoreAllCapsTitles", "readFromInputs", "minimumLookBackDistance", "LSIv2", "SCContainerize", "SCContainerOpen", "SCContainerClose", "SCContainerAIEnd", "showDebugData", "showDebugDataSCRawAIEntry", "showDebugDataSCRawAIMemory", "generationPrompt", "compressionPrompt", "defaultCardType"
+                "doAC", "deleteAllAutoCards", "pinConfigureCard", "addCardCooldown", "bulletedListMode", "rawAIPromptMode", "rawAIResponseMode", "defaultEntryLimit", "defaultCardsDoMemoryUpdates", "defaultMemoryLimit", "memoryCompressionRatio", "ignoreAllCapsTitles", "readFromInputs", "minimumLookBackDistance", "LSIv2", "SCContainerize", "SCContainerOpen", "SCContainerClose", "SCContainerAIEndSentinel", "showDebugData", "showDebugDataSCRawAIEntry", "showDebugDataSCRawAIMemory", "generationPrompt", "compressionPrompt", "defaultCardType"
             ],
             signal: [
                 "emergencyHalt", "forceToggle", "overrideBans", "swapControlCards", "recheckRetryOrErase", "maxChars", "outputReplacement", "upstreamError"
@@ -1221,7 +1224,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                         type: cast(type, AC.config.defaultCardType),
                         title,
                         keys: cast(keys, buildKeys("", title)),
-                        entry: cast(entry),
+                        entry: Internal.SCContainerWrap(cast(entry)),
                         description: cast(description)
                     }), boundInteger(0, insertionIndex, storyCards.length, newCardIndex()));
                     if (notEmptyObj(card)) {
@@ -2177,7 +2180,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                 if (parseConfig("customcontainerclosingstring", "string", "SCContainerClose")) { 
                     notify("The custom container closing string has been set to: \"" + cfg + "\"");
                 }
-                if (parseConfig("customcontaineraiendsentinel", "string", "SCContainerAIEnd")) { 
+                if (parseConfig("customcontaineraiendsentinel", "string", "SCContainerAIEndSentinel")) { 
                     notify("The custom container AI end sentinel: \"" + cfg + "\"");
                 }
                 if (parseConfig("logdebugdatainaseparatecard" , "boolean", "showDebugData")) {
@@ -3175,7 +3178,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                         // We can suggest that the AI use an end sentinel when it's done with the entry,
                         // BUT, there's no guarantee it will.
                         // Escape the sentinel incase it contains any Rx chars.
-                        let endSentinelEscaped = Internal.escapeRegExp(AC.config.SCContainerAIEnd);
+                        let endSentinelEscaped = Internal.escapeRegExp(AC.config.SCContainerAIEndSentinel);
 
                         const quoteRx = /(?<!\d)\"/; // Hunt for any quotes not preceded by a number, i.e. a measurement.
 
@@ -3326,7 +3329,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                         type: AC.generation.workpiece.type,
                         title: AC.generation.workpiece.title,
                         keys: AC.generation.workpiece.keys,
-                        entry: Internal.wrapSCContainer((function() {
+                        entry: Internal.SCContainerWrap((function() {
                             if (!AC.config.bulletedListMode) {
                                 return AC.generation.workpiece.entry;
                             }
@@ -3464,7 +3467,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
         }
         // Get an individual story card reference via titleKey
         function getAutoCard(titleKey) {
-            return Internal.getCard(card => Internal.unwrapSCContainer(card.entry).toLowerCase().startsWith("{title: " + titleKey + "}"));
+            return Internal.getCard(card => Internal.SCContainerUnwrap(card.entry).toLowerCase().startsWith("{title: " + titleKey + "}"));
         }
         function buildMemoryConstruct() {
             return (AC.compression.oldMemoryBank
@@ -3555,7 +3558,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
             );
         }
         function formatEntry(partialEntry) {
-            const unwrappedSC = Internal.unwrapSCContainer(partialEntry);
+            const unwrappedSC = Internal.SCContainerUnwrap(partialEntry);
             if (AC.config.rawAIPromptMode) {
                 return unwrappedSC;
             }
@@ -3607,7 +3610,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                 "> Use custom story card container: " + AC.config.SCContainerize,
                 "> Custom container open string: " + stringifyObject(AC.config.SCContainerOpen),
                 "> Custom container close string: " + stringifyObject(AC.config.SCContainerClose),
-                "> Custom container AI end sentinel: " + stringifyObject(AC.config.SCContainerAIEnd),
+                "> Custom container AI end sentinel: " + stringifyObject(AC.config.SCContainerAIEndSentinel),
                 "> Log debug data in a separate card: " + AC.config.showDebugData,
                 "> Log RAW AI entry data: " + AC.config.showDebugDataSCRawAIEntry,
                 "> Log RAW AI memory data: " + AC.config.showDebugDataSCRawAIMemory
@@ -4191,20 +4194,36 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
             return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); //
         }
 
-        static wrapSCContainer(content, force = false) {
-            //log("wrapSCContainer in:content: ", content);
-            if (AC.config.SCContainerize || force) { //
-                let wrappedContent = AC.config.SCContainerOpen + content + AC.config.SCContainerClose; //
-                //log("wrapSCContainer wrapped out:content: ", wrappedContent);
-                return wrappedContent; //
-            }
-            //log("wrapSCContainer not wrapped out:content: ", content);
-            return content; //
+        static SCContainerWrapSize() {
+            return AC.config.SCContainerOpen.length + AC.config.SCContainerClose.length;
+        }
+        static SCEntryMaxLen = 2000;
+        static SCContainerIsWrapped(content) {
+            const open = Internal.escapeRegExp(AC.config.SCContainerOpen); //
+            const openRegex = new RegExp(`^\\s*${open}\\s*`, 'i'); //
+            return openRegex.test(content);
         }
 
-        static unwrapSCContainer(content, force = false) {
-            //log("unwrapSCContainer in:content: ", content);
-            if (AC.config.SCContainerize || force) { //
+        static SCContainerWrap(content) {
+            //log("SCContainerWrap in:content: ", content);
+            // If it's already wrapped, do nothing.
+            if (Internal.SCContainerIsWrapped(content)) {
+                return content;
+            }
+            // If containerizing is on, limit the contained content so the wrapper fits and return it.
+            if (AC.config.SCContainerize) {
+                content = limitString(content, Internal.SCEntryMaxLen - Internal.SCContainerWrapSize());
+                content = AC.config.SCContainerOpen + content + AC.config.SCContainerClose; 
+                //log("SCContainerWrap wrapped out:content: ", wrappedContent);
+                return content; //
+            }
+            // Otherwise, not containerizing, so just limit the string.
+            return limitString(content, Internal.SCEntryMaxLen);
+        }
+
+        static SCContainerUnwrap(content) {
+            //log("SCContainerUnwrap in:content: ", content);
+            if (AC.config.SCContainerize) { //
                 const open = Internal.escapeRegExp(AC.config.SCContainerOpen); //
                 const close = Internal.escapeRegExp(AC.config.SCContainerClose); //
 
@@ -4220,15 +4239,17 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                         // we dont want to accidentally remove the close on things like {title:} if there's a user error in the SC.
                         unwrappedContent = unwrappedContent.replace(closeRegex, ''); //
                     }
-                    //log("unwrapSCContainer unwrapped out:content: ", unwrappedContent);
+                    //log("SCContainerUnwrap unwrapped out:content: ", unwrappedContent);
                     return unwrappedContent; //
                 }
             }
-            //log("unwrapSCContainer ignored content: ", content);
+            //log("SCContainerUnwrap ignored content: ", content);
             return content; //
         }
-        static sizeofSCWrapper() {
-            return AC.config.SCContainerOpen.length + AC.config.SCContainerClose.length;
+        static SCContainerProcess(content, limit, processorFunction, ...processorArgs) {
+            const unwrappedContent = Internal.SCContainerUnwrap(content);
+            const processedResult = processorFunction(unwrappedContent, ...processorArgs);
+            return Internal.SCContainterWrap(processedResult);
         }
 
         static generateCard(request, predefinedPair = ["", ""]) {
@@ -4277,7 +4298,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                             }
                         })() + " ");
                     }
-                })()), 2000 - Internal.sizeofSCWrapper()),
+                })()), 2000 - Internal.SCContainerWrapSize()),
                 description: limitString((
                     (function() {
                         const description = limitString((request.description ?? "").toString().trim(), 9900);
@@ -4310,6 +4331,10 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                     let promptDetails = insertTitle((
                         cleanSpaces((request.entryPromptDetails ?? "").toString().trim())
                     ), title);
+
+                    if (AC.config.SCContainerize && AC.config.SCContainerAIEndSentinel) {
+                        prompt = prompt.replaceAll(/%SC_SENTINEL%/g, AC.config.SCContainerAIEndSentinel);
+                    }
                     //log("request.prompt: ", prompt);
                     //log("request.promptDetails: ", promptDetails);
                     if (promptDetails !== "") {
@@ -4368,7 +4393,11 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                             return;
                         }
                     }
-                    return limitString(prompt, Math.floor(0.8 * AC.signal.maxChars));
+                    prompt = limitString(prompt, Math.floor(0.8 * AC.signal.maxChars));
+                    if (AC.config.showDebugDataSCRawAIEntry) {
+                        logEvent(`generateCard prompt: ${prompt}`);
+                    }
+                    return prompt;
                 })(),
                 limit: validateEntryLimit(parseInt((request.entryLimit || AC.config.defaultEntryLimit), 10))
             }));
@@ -4389,7 +4418,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
             O.f(request);
             Internal.getUsedTitles(true);
             if (!Internal.generateCard(request) && !Internal.generateCard(request, [
-                (oldCard.entry.match(/^{title: ([\s\S]*?)}/)?.[1] || request.title.replace(/\w\S*/g, word => (
+                (oldCard.entry.match(/{title: ([\s\S]*?)}/)?.[1] || request.title.replace(/\w\S*/g, word => (
                     word[0].toUpperCase() + word.slice(1).toLowerCase()
                 ))), oldCard.keys
             ])) {
@@ -4458,7 +4487,6 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                 card.type = card.type.trim();
                 card.title = card.title.trim();
                 // card.keys should be left as-is
-                card.entry = card.entry.trim();
                 card.description = card.description.trim();
                 if (isExternal) {
                     O.s(card);
@@ -4478,8 +4506,9 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                         continue;
                     }
                 }
+
                 // Detect and repair malformed auto-card properties in a fault-tolerant manner
-                const traits = [card.entry, card.description].map((str, i) => {
+                const traits = [Internal.SCContainerUnwrap(card.entry), card.description].map((str, i) => {
                     // Absolute abomination uwu
                     const hasUpdates = /updates?\s*:[\s\S]*?(?:(?:title|limit)s?\s*:|})/i.test(str);
                     const hasLimit = /limits?\s*:[\s\S]*?(?:(?:title|update)s?\s*:|})/i.test(str);
@@ -4568,7 +4597,8 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                         seen.add(title);
                         auto.add(title.toLowerCase());
                         const titleHeader = "{title: " + title + "}";
-                        if (!repair && !((card.entry === titleHeader) || card.entry.startsWith(titleHeader + "\n"))) {
+                        const cardEntryUnwrapped = Internal.SCContainerUnwrap(card.entry);
+                        if (!repair && !((cardEntryUnwrapped === titleHeader) || cardEntryUnwrapped.startsWith(titleHeader + "\n"))) {
                             repair = true;
                         }
                     }
@@ -4578,7 +4608,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                     function parseTitle(fromEntry) {
                         const [sourceType, sourceText] = (function() {
                             if (fromEntry) {
-                                return [hasEntryTitle, card.entry];
+                                return [hasEntryTitle, Internal.SCContainerUnwrap(card.entry)];
                             } else {
                                 return [hasDescTitle, card.description];
                             }
@@ -4641,7 +4671,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                         const updatesText = (isolateProperty(
                             (function() {
                                 if (fromEntry) {
-                                    return card.entry;
+                                    return Internal.SCContainerUnwrap(card.entry);
                                 } else {
                                     return card.description;
                                 }
@@ -4687,7 +4717,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                         const limitText = (isolateProperty(
                             (function() {
                                 if (fromEntry) {
-                                    return card.entry;
+                                    return Internal.SCContainerUnwrap(card.entry);
                                 } else {
                                     return card.description;
                                 }
@@ -4714,8 +4744,11 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                 }
                 // Damage was detected, perform an adaptive repair on this auto-card's configurable properties
                 card.description = card.description.replaceAll("%@%", "\n\n");
+                card.entry = Internal.SCContainerUnwrap(card.entry).trimEnd();
                 safeRemoveProps();
-                card.entry = limitString(("{title: " + title + "}\n" + card.entry).trimEnd(), 2000);
+                //card.entry = limitString(("{title: " + title + "}\n" + card.entry).trimEnd(), 2000);
+
+                card.entry = Internal.SCContainerWrap("{title: " + title + "}\n" + card.entry);
                 const [left, right] = card.description.split("%@%");
                 rejoinDescription(left, memoryProperties, right);
                 checkRemaining();
@@ -4783,6 +4816,8 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                         return name;
                     }
                 }
+                card.entry = Internal.SCContainerWrap(card.entry);
+
             }
             clearTransientTitles();
             AC.database.titles.used = [...seen];
@@ -4889,7 +4924,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
             SCContainerOpen: check(DEFAULT_SC_CONTAINER_OPEN, "", "string"),
             SCContainerClose: check(DEFAULT_SC_CONTAINER_CLOSE, "", "string"),
             // An End Sentinel the AI may use to trigger end of output.
-            SCContainerAIEnd: check(DEFAULT_SC_CONTAINER_AI_END, "", "string"),
+            SCContainerAIEndSentinel: check(DEFAULT_SC_AI_END_SENTINEL, "", "string"),
             
             // Should the debug data card be visible?
             showDebugData: check(DEFAULT_SHOW_DEBUG_DATA, false),
@@ -5174,7 +5209,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
         const titleKey = targetCard.trim().replace(/\s+/g, " ").toLowerCase();
         const autoCard = Internal.getCard(card => (card.entry
             .toLowerCase()
-            .startsWith("{title: " + titleKey + "}")
+            .includes("{title: " + titleKey + "}")
         ));
         if (autoCard !== null) {
             return [autoCard, true, titleKey];
