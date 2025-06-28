@@ -6,6 +6,11 @@ This AI Dungeon script automatically creates and updates plot-relevant story car
 General-purpose usefulness and compatibility with other scenarios/scripts were my design priorities
 Auto-Cards is fully open-source, please copy for use within your own projects! ❤️
 */
+/*
+Modified by Randy Viosca to support:
+- story card encapsulation.
+- sending and receiving raw text from the AI to support JavaScript and AI formatting.
+*/
 function AutoCards(inHook, inText, inStop) {
     "use strict";
     /*
@@ -143,10 +148,10 @@ class SCG { // Story Card Generator.
 - Character: {Age}, {Gender}, {Pronouns}, {Occupation}.
 - Vitals: {vital_statsics}. // i.e. hair, eyes, height (double quotes forbidden, use decimal), weight, body tone, measurements (just numbers and -'s), etc...
 - Archetypes: {character_archetypes}. // 1 or 2 archetypes.
-- Appearance: {typical_appearance}. // i.e. pure prose list, briefly their normal attire/style.
-- Traits: {personality_traits}. // i.e. pure prose list, briefly, intelligence, emotionality, humor.
-- Motivations: {motivations}. // i.e. pure prose list, briefly, key internal character motivators, if known.
-- {description}. // i.e. pure prose, imperative, 200 characters max.
+- Appearance: {typical_appearance}. // i.e. imperative pure prose list, briefly their normal attire/style.
+- Traits: {personality_traits}. // i.e. imperative pure prose list, briefly, intelligence, emotionality, humor.
+- Motivations: {motivations}. // i.e. imperative pure prose list, briefly, key internal character motivators, if known.
+- {description}. // i.e. imperative pure prose, 200 characters max.
 %SC_SENTINEL% // When the entry is complete, generate this sentinel.
 \`;
 		return character_template;
@@ -155,7 +160,7 @@ class SCG { // Story Card Generator.
 		let location_template = 
 \`
 - Location.
-- {description}. // i.e. pure prose, imperative, 200 characters max.
+- {description}. // i.e. imperative pure prose, 200 characters max.
 %SC_SENTINEL% // When the entry is complete, generate this sentinel.
 \`;
 		return location_template;
@@ -164,7 +169,7 @@ class SCG { // Story Card Generator.
 		let thing_template = 
 \`
 - Thing.
-- {description}. // i.e. pure prose, imperative, 200 characters max.
+- {description}. // i.e. imperative pure prose, 200 characters max.
 %SC_SENTINEL% // When the entry is complete, generate this sentinel.
 \`;
 		return thing_template;
