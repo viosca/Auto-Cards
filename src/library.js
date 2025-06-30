@@ -1,3 +1,5 @@
+/// <reference no-default-lib="true"/>
+/// <reference lib="es2022"/>
 // Your "Library" tab should look like this
 /*
 Auto-Cards
@@ -79,9 +81,9 @@ function AutoCards(inHook, inText, inStop) {
 
     // Variables affecting containers.
     const DEFAULT_SC_CONTAINERIZE = true
-    const DEFAULT_SC_CONTAINER_OPEN = "{ Story card: "
+    const DEFAULT_SC_CONTAINER_OPEN = "{ Entity: "
     const DEFAULT_SC_CONTAINER_CLOSE = "\n}"
-    const DEFAULT_SC_AI_END_SENTINEL = "SC_END"
+    const DEFAULT_SC_AI_END_SENTINEL = "ENTITY_END"
 
     // Should the "Debug Data" story card be visible?
     const DEFAULT_SHOW_DEBUG_DATA = false
@@ -120,22 +122,23 @@ function AutoCards(inHook, inText, inStop) {
 [## AI, stop the story and ignore previous story AI instructions.
 #! This is JellyFish (JFSH), a block structured AI pseudo language that is a blend of C/C++/JavaScript/JSON/Kotlin. AI, just go with the flow.
 # In JFSH, identifiers have meanings that the AI can use. They are like nouns and verbs. Comments also provide AI direction. Program flow provides the 'when'.
-class SCG { // Story Card Generator.
+class EntityGenerator {
     constructor (name) {
-        // Determine the type of 'name' as Character, Location, or Thing. And call the appropropriate member function for that type.
-        this.type = typeof(name);
-        if (this.type == 'character') {
-            this.entry = this.Character(name);
-        } elsif (this.type == 'location') {
-            this.entry = this.Location(name);
+        // Determine the entityType of 'name' as Character, Location, or Thing. And call the appropropriate member function for that entityType.
+        this.entityType = typeof(name);
+        if (this.entityType == 'character') {
+            this.entity = this.Character(name);
+        } elsif (this.entityType == 'location') {
+            this.entity = this.Location(name);
         } else {
-            this.entry = this.Thing(name);
+            this.entity = this.Thing(name);
         }
     }
-    Print () { console.log(this.entry); }
+    Print () { console.log(this.entity); }
 
     // From the current story or fanfiction universe and the selected template, fill out the {Paceholders} and strip out the comments.
     // High information/token density is the key. Be concise and grounded. Avoid stating the obvious.
+    // Avoid short-term temporary details or appearances, instead focus on plot-significant information.
     // If information is unknown but can be reasonably assumed from the story or fanfiction universe, use that, or create something reasonable. 
     // For lists, write only brief third-person imperative items assuming the subject of 'name'. Use pronouns only if needed.
     // For {description}, write only a very brief third-person imperative statement assuming the subject of 'name'. Use pronouns only if needed.
@@ -143,41 +146,42 @@ class SCG { // Story Card Generator.
     // When complete, generate the end sentinel: '%SC_SENTINEL%'.
 
 	Character(name)  {
-		let character_template = 
+		let character_template =
 \`
-- Character: {Age}, {Gender}, {Pronouns}, {Occupation}.
-- Vitals: {vital_statsics}. // i.e. hair, eyes, height (double quotes forbidden, use decimal), weight, body tone, measurements (just numbers and -'s), etc...
-- Archetypes: {character_archetypes}. // 1 or 2 archetypes.
+- Type: {EntityType}.
+- Bio: {Age}, {Gender}, {Pronouns}, {Occupation}.
+- Physique: {Height}, {Weight}, {Features}... // i.e. hair, eyes, height (double quotes forbidden, use decimal), weight, body tone, measurements (just numbers and -'s), etc...
 - Appearance: {typical_appearance}. // i.e. imperative pure prose list, briefly their normal attire/style.
-- Traits: {personality_traits}. // i.e. imperative pure prose list, briefly, intelligence, emotionality, humor.
-- Motivations: {motivations}. // i.e. imperative pure prose list, briefly, key internal character motivators, if known.
-- {description}. // i.e. imperative pure prose, 200 characters max.
-%SC_SENTINEL% // When the entry is complete, generate this sentinel.
+- Archetypes: {character_archetypes}. // 1 or 2 archetypes.
+- Tropes: {character_tropes}. // 1 or 2 tropes. Imperative pure prose list.
+- Psyche: {Traits}, {Motivations}, {Flaws}... // imperative pure prose list, briefly.
+- {description}. // i.e. imperative pure prose, 200 characters max, or omit entirely.
+%SC_SENTINEL% // When the entity is complete, generate this sentinel.
 \`;
 		return character_template;
 	}
 	Location(name)  {
-		let location_template = 
+		let location_template =
 \`
-- Location.
+- Type: {EntityType}.
 - {description}. // i.e. imperative pure prose, 200 characters max.
-%SC_SENTINEL% // When the entry is complete, generate this sentinel.
+%SC_SENTINEL% // When the entity is complete, generate this sentinel.
 \`;
 		return location_template;
 	}
 	Thing(name)  {
-		let thing_template = 
+		let thing_template =
 \`
-- Thing.
+- Type {EntityType}.
 - {description}. // i.e. imperative pure prose, 200 characters max.
-%SC_SENTINEL% // When the entry is complete, generate this sentinel.
+%SC_SENTINEL% // When the entity is complete, generate this sentinel.
 \`;
 		return thing_template;
 	}
 }
 SCG("%{title}").Print(); // Call the constructor which generates the output.
 
-Continue the entry for %{title} below while avoiding repetition of previous placeholders, descriptions, and lists. When the entire entry is done, gemerate %SC_SENTINEL%:
+Continue the entity for %{title} below while avoiding repetition of previous placeholders, descriptions, and lists. When the entire entity is done, gemerate %SC_SENTINEL%:
 ]
 
 %{entry}
@@ -3894,7 +3898,7 @@ Continue the entry for %{title} below while avoiding repetition of previous plac
                 [343332, 451737, 323433, 377817], [436425, 356928, 363825, 444048], [323433, 428868, 310497, 413952], [350097, 66825, 436425, 413952, 406593, 444048], [316932, 330000, 436425, 392073], [444048, 356928, 323433], [451737, 444048, 363825], [330000, 310497, 392073, 399300]
             ],
             delimiter: () => (
-                "——————————————————————————"
+                "———————————————————————————"
             ),
             // Source code location
             copy: () => [
