@@ -9,10 +9,12 @@ General-purpose usefulness and compatibility with other scenarios/scripts were m
 Auto-Cards is fully open-source, please copy for use within your own projects! ❤️
 */
 /*
-Modified by Randy Viosca to support:
+Modified by Randy Viosca August 2025 to support:
 - story card encapsulation.
 - sending and receiving raw text from the AI to support JavaScript and AI formatting.
+- parsing AI's raw text mode output to handle proper phrase termination.
 */
+
 function AutoCards(inHook, inText, inStop) {
     "use strict";
     /*
@@ -79,10 +81,31 @@ function AutoCards(inHook, inText, inStop) {
     const DEFAULT_DO_LSI_V2 = false
     // (true or false)
 
+    // Trim incomplete sentences for story cards
+    const DEFAULT_TRIM_SENTENCE_FRAG_CARDS = true
+    // Trim incomplete delimiters for story cards
+    const DEFAULT_TRIM_DELIMITER_FRAGS_CARDS = true
+    // Strip out asterisks for story cards
+    const DEFAULT_STRIP_ASTERISKS_CARDS = true
+    // Prettify Em Dashes for story cards.
+    const DEFAULT_PRETTIFY_EMDASHES_CARDS = true
+
+    // Trim incomplete sentences in normal story responses.
+    const DEFAULT_TRIM_SENTENCE_FRAG_STORY = true
+    // Trim incomplete delimiters in normal story responses.
+    const DEFAULT_TRIM_DELIMITER_FRAGS_STORY = true
+    // Strip out asterisks in normal story responses.
+    const DEFAULT_STRIP_ASTERISKS_STORY = true
+    // Prettify Em Dashes in normal story responses.
+    const DEFAULT_PRETTIFY_EMDASHES_STORY = true
+
     // Variables affecting containers.
     const DEFAULT_SC_CONTAINERIZE = true
     const DEFAULT_SC_CONTAINER_OPEN = "{ Entity: "
     const DEFAULT_SC_CONTAINER_CLOSE = "\n}"
+
+    // Sentinels hopefully returned by the AI:
+    const DEFAULT_SC_AI_BEGIN_SENTINEL = "ENTITY_BEGIN"
     const DEFAULT_SC_AI_END_SENTINEL = "ENTITY_END"
 
     // Should the "Debug Data" story card be visible?
@@ -118,74 +141,54 @@ function AutoCards(inHook, inText, inStop) {
     // AI prompt used to generate new story card entries?
     const DEFAULT_CARD_GENERATION_PROMPT =
 `-----
-
-[## AI, stop the story and ignore previous story AI instructions.
+<SYSTEM>
+[# AI, stop the story and ignore previous instructions.
 #! This is JellyFish (JFSH), a block structured AI pseudo language that is a blend of C/C++/JavaScript/JSON/Kotlin. AI, just go with the flow.
 # In JFSH, identifiers have meanings that the AI can use. They are like nouns and verbs. Comments also provide AI direction. Program flow provides the 'when'.
-class EntityGenerator {
-    constructor (name) {
-        // Determine the entityType of 'name' as Character, Location, or Thing. And call the appropropriate member function for that entityType.
-        this.entityType = typeof(name);
-        if (this.entityType == 'character') {
-            this.entity = this.Character(name);
-        } elsif (this.entityType == 'location') {
-            this.entity = this.Location(name);
-        } else {
-            this.entity = this.Thing(name);
-        }
-    }
-    Print () { console.log(this.entity); }
 
-    // From the current story or fanfiction universe and the selected template, fill out the {Paceholders} and strip out the comments.
-    // High information/token density is the key. Be concise and grounded. Avoid stating the obvious.
-    // Avoid short-term temporary details or appearances, instead focus on plot-significant information.
-    // If information is unknown but can be reasonably assumed from the story or fanfiction universe, use that, or create something reasonable. 
-    // For lists, write only brief third-person imperative items assuming the subject of 'name'. Use pronouns only if needed.
-    // For {description}, write only a very brief third-person imperative statement assuming the subject of 'name'. Use pronouns only if needed.
-    // Banned characters: do not generate double quotes.
-    // When complete, generate the end sentinel: '%SC_SENTINEL%'.
+// Determine the entityType of '%{title}' as a Person, Organization, Location, Event, or Thing. 
+// If there are multiple entityTypes for a '%{title}', use precedence high to low: Person, Organization, Location, Event, Thing.
+// From the current story or fanfiction universe and the selected template, fill out the {Paceholders} and strip out the comments.
+// High information/token density is the key. Be concise and grounded. Avoid stating the obvious.
+// Avoid short-term temporary details or appearances, instead focus on plot-significant information.
+// If information is unknown but can be reasonably assumed from the story or fanfiction universe, use that, or create something reasonable. 
+// For lists, write only brief third-person imperative items assuming the subject of 'name'. Use pronouns only if needed.
+// For {Description}, write only a very brief third-person imperative statement assuming the subject of 'name'. Use pronouns only if needed.
+// Resume an incomplete entity from where  it left off - Never restart or restate previous work.
+// When the entity is complete, always generate the end sentinel: '%SC_END_SENTINEL%'
+// Never return an empty string.
+// AI, your output is read by a script. Anything outside of the sentinels is not visible. Simply output the entity, stop, and await next instructions.
 
-	Character(name)  {
-		let character_template =
-\`
-- Type: {EntityType}.
+if (entityType is 'Person') {
+    print \`
+%SC_BEGIN_SENTINEL%
+- Name: %{title}.
+- Type: Person, {Optional Entity Subtype}.
 - Bio: {Age}, {Gender}, {Pronouns}, {Occupation}.
-- Physique: {Height}, {Weight}, {Features}... // i.e. hair, eyes, height (double quotes forbidden, use decimal), weight, body tone, measurements (just numbers and -'s), etc...
-- Appearance: {typical_appearance}. // i.e. imperative pure prose list, briefly their normal attire/style.
-- Archetypes: {character_archetypes}. // 1 or 2 archetypes.
-- Tropes: {character_tropes}. // 1 or 2 tropes. Imperative pure prose list.
+- Physique: {Height}, {Weight}, {Features}... // i.e. hair, eyes, height, weight, body tone, measurements (just numbers and -'s), etc...
+- Appearance: {Typical Appearance}. // i.e. briefly their normal attire/style.
+- Archetypes: {Character Archetypes}. // 1 or 2 archetypes.
+- Tropes: {Character Tropes}. // 1 or 2 tropes. Imperative pure prose list.
 - Psyche: {Traits}, {Motivations}, {Flaws}... // imperative pure prose list, briefly.
-- {description}. // i.e. imperative pure prose, 200 characters max, or omit entirely.
-%SC_SENTINEL% // When the entity is complete, generate this sentinel.
+- Description: {Description}. // i.e. One sentence imperative pure prose description, 200 characters max.
+- End Sentinel: %SC_END_SENTINEL% // Important: complete your Entity work with this sentinel!
 \`;
-		return character_template;
-	}
-	Location(name)  {
-		let location_template =
-\`
-- Type: {EntityType}.
-- {description}. // i.e. imperative pure prose, 200 characters max.
-%SC_SENTINEL% // When the entity is complete, generate this sentinel.
+} 
+else {
+    print \`
+%SC_BEGIN_SENTINEL%
+- Name: %{title}.
+- Type: {EntityType}, {Optional Entity Subtype}.
+- Description: {Description}. // i.e. One sentence imperative pure prose description, 200 characters max.
+- End Sentinel: %SC_END_SENTINEL% // Important: complete your Entity work with this sentinel!
 \`;
-		return location_template;
-	}
-	Thing(name)  {
-		let thing_template =
-\`
-- Type {EntityType}.
-- {description}. // i.e. imperative pure prose, 200 characters max.
-%SC_SENTINEL% // When the entity is complete, generate this sentinel.
-\`;
-		return thing_template;
-	}
 }
-SCG("%{title}").Print(); // Call the constructor which generates the output.
-
-Continue the entity for %{title} below while avoiding repetition of previous placeholders, descriptions, and lists. When the entire entity is done, gemerate %SC_SENTINEL%:
 ]
-
+</SYSTEM>
 %{entry}
 `;
+
+// Continue the entity for '%{title}' below while avoiding repetition of previous placeholders, descriptions, and lists. When the entire entity is complete, gemerate %SC_END_SENTINEL%:
 
     // AI prompt used to summarize a given story card's memory bank?
     const DEFAULT_CARD_MEMORY_COMPRESSION_PROMPT = prose(
@@ -624,7 +627,13 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
         // If the deserialized state fails to match the following structure, fallback to defaults
         if (validate(ac, O.f({
             config: [
-                "doAC", "deleteAllAutoCards", "pinConfigureCard", "addCardCooldown", "bulletedListMode", "rawAIPromptMode", "rawAIResponseMode", "defaultEntryLimit", "defaultCardsDoMemoryUpdates", "defaultMemoryLimit", "memoryCompressionRatio", "ignoreAllCapsTitles", "readFromInputs", "minimumLookBackDistance", "LSIv2", "SCContainerize", "SCContainerOpen", "SCContainerClose", "SCContainerAIEndSentinel", "showDebugData", "showDebugDataSCRawAIEntry", "showDebugDataSCRawAIMemory", "generationPrompt", "compressionPrompt", "defaultCardType"
+                "doAC", "deleteAllAutoCards", "pinConfigureCard", "addCardCooldown", "bulletedListMode", "rawAIPromptMode", "rawAIResponseMode", 
+                "defaultEntryLimit", "defaultCardsDoMemoryUpdates", "defaultMemoryLimit", "memoryCompressionRatio", "ignoreAllCapsTitles", "readFromInputs", 
+                "minimumLookBackDistance", "LSIv2", 
+                "trimSentenceFragCards", "trimDelimiterFragCards", "stripAsterisksCards", "prettifyEmDashesCards",
+                "trimSentenceFragStory", "trimDelimiterFragStory", "stripAsterisksStory", "prettifyEmDashesStory",
+                "SCContainerize", "SCContainerOpen", "SCContainerClose", "SCContainerAIBeginSentinel", "SCContainerAIEndSentinel",
+                "showDebugData", "showDebugDataSCRawAIEntry", "showDebugDataSCRawAIMemory", "generationPrompt", "compressionPrompt", "defaultCardType"
             ],
             signal: [
                 "emergencyHalt", "forceToggle", "overrideBans", "swapControlCards", "recheckRetryOrErase", "maxChars", "outputReplacement", "upstreamError"
@@ -1925,7 +1934,8 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
                 }
             }));
         }
-    } else if (AC.config.doAC) {
+    } 
+    else if (AC.config.doAC) {
         // Auto-Cards is currently enabled
         // "text" represents the original text which was present before any scripts were executed
         // "TEXT" represents the script-modified version of "text" which AutoCards was called with
@@ -2180,6 +2190,32 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
                         }
                     }
                 }
+                if (parseConfig("trimcardsentencefrags", "boolean", "trimSentenceFragCards")) { 
+                    notify("Trimming story card sentence frags: \"" + cfg + "\"");
+                }
+                if (parseConfig("trimcardquotefrags", "boolean", "trimDelimiterFragCards")) { 
+                    notify("Trimming incomplete story card quotes: \"" + cfg + "\"");
+                }
+                if (parseConfig("stripcardasterisks", "boolean", "stripAsterisksCards")) { 
+                    notify("Stripping card asterisks: \"" + cfg + "\"");
+                }
+                if (parseConfig("prettifycardemdashes", "boolean", "prettifyEmDashesCards")) { 
+                    notify("Prettifying card em dashes: \"" + cfg + "\"");
+                }
+
+                if (parseConfig("trimstorysentencefrags", "boolean", "trimSentenceFragStory")) { 
+                    notify("Trimming story card sentence frags: \"" + cfg + "\"");
+                }
+                if (parseConfig("trimstoryquotefrags", "boolean", "trimDelimiterFragStory")) { 
+                    notify("Trimming incomplete story card quotes: \"" + cfg + "\"");
+                }
+                if (parseConfig("stripstoryasterisks", "boolean", "stripAsterisksStory")) { 
+                    notify("Stripping card asterisks: \"" + cfg + "\"");
+                }
+                if (parseConfig("prettifystoryemdashes", "boolean", "prettifyEmDashesStory")) { 
+                    notify("Prettifying card em dashes: \"" + cfg + "\"");
+                }
+
                 if (parseConfig("usecustomstorycardcontainer", "boolean", "SCContainerize")) { 
                     notify("Using custom story card container: \"" + cfg + "\"");
                 }
@@ -2188,6 +2224,9 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
                 }
                 if (parseConfig("customcontainerclosingstring", "string", "SCContainerClose")) { 
                     notify("The custom container closing string has been set to: \"" + cfg + "\"");
+                }
+                if (parseConfig("customcontaineraibeginsentinel", "string", "SCContainerAIBeginSentinel")) { 
+                    notify("The custom container AI end sentinel: \"" + cfg + "\"");
                 }
                 if (parseConfig("customcontaineraiendsentinel", "string", "SCContainerAIEndSentinel")) { 
                     notify("The custom container AI end sentinel: \"" + cfg + "\"");
@@ -2331,7 +2370,7 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
                             // Skip utility actions
                             continue;
                         }
-                        const words = (prettifyEmDashes(action.text)
+                        const words = (Internal.prettifyEmDashes(action.text)
                             // Nuh uh
                             .replace(/[“”]/g, "\"").replace(/[‘’]/g, "'").replaceAll("´", "`")
                             .replaceAll("。", ".").replaceAll("？", "?").replaceAll("！", "!")
@@ -3162,9 +3201,24 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
             }
             break; }
         case "output": {
-            // AutoCards was called within the output modifier
-            const output = AC.config.rawAIResponseMode ? TEXT : prettifyEmDashes(TEXT);
-            if (0 < AC.chronometer.postpone) {
+            if (AC.config.showDebugDataSCRawAIEntry) {
+                logEvent("OUTPUT: Raw AI Output (TEXT): " + TEXT); //
+            }
+
+            const output = 
+                Internal.normalizeWhitespace(
+                    Internal.trimDelimiterFragIf(AC.config.trimDelimiterFragStory,
+                        Internal.trimPhraseFragIf(AC.config.trimSentenceFragStory,
+                            Internal.prettifyEmDashesIf(AC.config.prettifyEmDashesStory,
+                                Internal.stripAsterisksIf(AC.config.stripAsterisksStory,        
+                                    TEXT
+                                )
+                            )
+                        )
+                    )
+                );
+
+                if (0 < AC.chronometer.postpone) {
                 // Do not capture or replace any outputs during this turn
                 promoteAmnesia();
                 if (permitOutput()) {
@@ -3176,47 +3230,87 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
                 }
             } else if (isPendingGeneration()) {
                 if (AC.config.showDebugDataSCRawAIEntry) {
-                    logEvent("Raw AI Output (Card Generation): " + text); //
+                    logEvent("Raw AI Output (isPendingGeneration): " + TEXT);
                 }
-                const textClone = AC.config.rawAIResponseMode ? text : prettifyEmDashes(text);
-                
+                const textClone = Internal.prettifyEmDashes(text).replace(/\*/g,"");
+
                 AC.chronometer.amnesia = 0;
                 AC.generation.completed++;
                 const generationsRemaining = (function() {
                     if (AC.config.rawAIResponseMode) {
-                        // We can suggest that the AI use an end sentinel when it's done with the entry,
-                        // BUT, there's no guarantee it will.
-                        // Escape the sentinel incase it contains any Rx chars.
-                        let endSentinelEscaped = Internal.escapeRegExp(AC.config.SCContainerAIEndSentinel);
+                        // We combine here in case there was a partial sentinel that the AI has completed.
+                        AC.generation.workpiece.entry += TEXT;
 
-                        const quoteRx = /(?<!\d)\"/; // Hunt for any quotes not preceded by a number, i.e. a measurement.
+                        let sawEndSentinel = false;
+                        if (AC.config.SCContainerAIEndSentinel !== "") {
+                            const endSentinelEscaped = Internal.escapeRegExp(AC.config.SCContainerAIEndSentinel);
+                            const endSentinelRx = new RegExp(`\\n[^\n]*${endSentinelEscaped}.*$`, 's');
+                            // If defined, replace the end sentinel and any leading ws and bullet followed by any character to the end of input.
+                            sawEndSentinel = endSentinelRx.test(AC.generation.workpiece.entry);
+                            AC.generation.workpiece.entry = AC.generation.workpiece.entry.replace(endSentinelRx, "");
 
-                        // Match the sentinel and any leading ws and bullet followed by any character to the end of input.
-                        // Note, the sentinel has a bullet in the prompt to draw attention to it for the AI.
-                        const endSentinelRx = new RegExp(`\\s*[-*]?\\s*${endSentinelEscaped}\\s*.*`, 's');
-                        if (endSentinelRx.test(textClone)) {
+                            // If the end sentinel has been seen, then remove the begin sentinel.
+                            if (sawEndSentinel && AC.config.SCContainerAIBeginSentinel !== "") {
+                                const beginSentinelEscaped = Internal.escapeRegExp(AC.config.SCContainerAIBeginSentinel);
+                                const beginSentinelRx = new RegExp(`.*${beginSentinelEscaped}\\s*`, 's');
+                                AC.generation.workpiece.entry = AC.generation.workpiece.entry.replace(beginSentinelRx, "\n");
+                            }
+
+                        }
+
+                        // We do some cleanup between generations to keep the AI from developing bad patterns.
+                        AC.generation.workpiece.entry = AC.generation.workpiece.entry
+                            .replace(/\s*\/\/[^\n]*\n/gm, '') // Strip out any JavaScript line style comments.
+                            .replace(/(?<=\d)"/g, '') // clean up measurements to remove double quotes.
+                            .replace(/\s*-\s+(?=[^\n]+:)/g, "\n- ") // clean up dashed list items so they're on their own lines.
+                            ;
+                        //logEvent("outputModifier: workpiece.entry/after subst: " + AC.generation.workpiece.entry);
+
+                        // Now clean up sentence, and delimiter frags and remove asterisks.
+                        AC.generation.workpiece.entry = 
+                            Internal.normalizeWhitespace(
+                                Internal.trimPhraseFragIf(AC.config.trimSentenceFragCards,
+                                    Internal.trimDelimiterFragIf(AC.config.trimDelimiterFragCards,
+                                        Internal.prettifyEmDashesIf(AC.config.prettifyEmDashesCards,
+                                            Internal.stripAsterisksIf(AC.config.stripAsterisksCards,
+                                                AC.generation.workpiece.entry
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        ;
+
+                        // If the end sentinel was seen above, we're done.
+                        if (sawEndSentinel) {
                             // The AI signaled the end of the entry.
-                            // Snip off the end of the response including the sentinel
-                            AC.generation.workpiece.entry += textClone.replace(endSentinelRx,"");
-                            logEvent("outputModifier: Doing a Skip to end for the end sentinel.", ); //
+                            //logEvent("outputModifier: Saw the end sentinel, skipping end."); //
+                            // The final cleanup happens in the card generation.
+                            return 0; // Causes a skip to end.
+                        }
+
+                        // Now check that we're not overflowing the entry.
+                        const entrySize = AC.generation.workpiece.entry.length - Internal.SCContainerSentinelSize();
+                        //logEvent("workpiece length: " + entrySize);
+                        if (entrySize > AC.config.defaultEntryLimit ) {
+                            //logEvent("outputModifier: Got max entry length, skipping end."); //
                             return 0;
-                        } else if (quoteRx.test(textClone)) {
-                            // To build coherent entries, the AI must not attempt to continue the story
-                            logEvent("outputModifier: Saw a quote, doing a Skip"); //
-                            return skip(estimateRemainingGens());
                         }
-                        // Otherwise, no sentinel, no double quotes, continue on...
-                    } else {
-                        if (
-                            textClone.includes("\"")
-                        || /(?<=^|\s|—|\(|\[|{)sa(ys?|id)(?=\s|\.|\?|!|,|;|—|\)|\]|}|$)/i.test(textClone)
-                        ) {
-                            // Discard full outputs containing "say" or quotations
-                            // To build coherent entries, the AI must not attempt to continue the story
-                            logEvent("outputModifier: Doing a Skip"); //
-                            return skip(estimateRemainingGens());
-                        }
+                        return estimateRemainingGens();
                     }
+
+                    // NOT! AI RAW RESPONSE MODE:
+
+                    if (
+                        textClone.includes("\"")
+                    || /(?<=^|\s|—|\(|\[|{)sa(ys?|id)(?=\s|\.|\?|!|,|;|—|\)|\]|}|$)/i.test(textClone)
+                    ) {
+                        // Discard full outputs containing "say" or quotations
+                        // To build coherent entries, the AI must not attempt to continue the story
+                        //logEvent("outputModifier: Doing a Skip"); //
+                        return skip(estimateRemainingGens());
+                    }
+
                     const oldSentences = (splitBySentences(formatEntry(AC.generation.workpiece.entry))
                         .map(sentence => sentence.trim())
                         .filter(sentence => (2 < sentence.length))
@@ -3339,6 +3433,10 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
                         title: AC.generation.workpiece.title,
                         keys: AC.generation.workpiece.keys,
                         entry: Internal.SCContainerWrap((function() {
+                            if (AC.config.SCContainerize) {
+                                const titleHeader = "{title: " + AC.generation.workpiece.title + "} ";
+                                return titleHeader + AC.generation.workpiece.entry;
+                            }
                             if (!AC.config.bulletedListMode) {
                                 return AC.generation.workpiece.entry;
                             }
@@ -3388,7 +3486,7 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
                     clearTransientTitles();
                 }
             } else if (isPendingCompression()) {
-                const textClone = prettifyEmDashes(text);
+                const textClone = Internal.prettifyEmDashes(text);
                 AC.chronometer.amnesia = 0;
                 AC.compression.completed++;
                 const compressionsRemaining = (function() {
@@ -3583,9 +3681,10 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
             }
         }
         // Resolve malformed em dashes (common AI cliche)
-        function prettifyEmDashes(str) {
+        /* function prettifyEmDashes(str) {
             return str.replace(/(?<!^\s*)(?: - | ?– ?)(?!\s*$)/g, "—");
         }
+            */
         function getConfigureCardTemplate() {
             const names = getControlVariants().configure;
             return O.f({
@@ -3616,9 +3715,21 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
                 "> Also detect titles from player inputs: " + AC.config.readFromInputs,
                 "> Minimum turns age for title detection: " + AC.config.minimumLookBackDistance,
                 "> Use Live Script Interface v2: " + (AC.config.LSIv2 !== null),
+
+                "> Trim card sentence frags: " + AC.config.trimSentenceFragCards,
+                "> Trim card quote frags: " + AC.config.trimDelimiterFragCards,
+                "> Strip card asterisks: " + AC.config.stripAsterisksCards,
+                "> Pretify card em dashes: " + AC.config.prettifyEmDashesCards,
+                
+                "> Trim story sentence frags: " + AC.config.trimSentenceFragStory,
+                "> Trim story quote frags: " + AC.config.trimDelimiterFragStory,
+                "> Strip story asterisks: " + AC.config.stripAsterisksStory,
+                "> Pretify story em dashes: " + AC.config.prettifyEmDashesStory,
+                
                 "> Use custom story card container: " + AC.config.SCContainerize,
                 "> Custom container open string: " + stringifyObject(AC.config.SCContainerOpen),
                 "> Custom container close string: " + stringifyObject(AC.config.SCContainerClose),
+                "> Custom container AI begin sentinel: " + stringifyObject(AC.config.SCContainerAIBeginSentinel),
                 "> Custom container AI end sentinel: " + stringifyObject(AC.config.SCContainerAIEndSentinel),
                 "> Log debug data in a separate card: " + AC.config.showDebugData,
                 "> Log RAW AI entry data: " + AC.config.showDebugDataSCRawAIEntry,
@@ -3832,6 +3943,28 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
     function hoistWords() { return (class Words { static #cache = {}; static {
         // Each word list is initialized only once before being cached!
         const wordListInitializers = {
+            // These are being made available for externally fixing the AI raw mode bad truncation.
+            commonHonorificsAbbreviations: () => [
+                // Honorifics
+                'Dr', 'Mrs', 'Mr', 'Ms', 'Jr', 'Sr', 'Prof', 'Gen', 'Col', 'Capt', 'Maj', 'Lt', 'Cpl', 'Sgt', 'Pvt',
+                // Common Latin/English abbreviations
+                'e.g', 'i.e', 'etc', 'vs', 'cf', 'viz', 'et al', 'ibid', 'id',
+                // Units of measure (often have periods)
+                'in', 'ft', 'yd', 'mi', 'km', 'cm', 'mm', 'kg', 'g', 'mg', 'lb', 'oz', 'ml', 'L', 'cc', 'sq', 'cu', 'F', 'C',
+                // Geographic/Organizational abbreviations
+                'St', 'Ave', 'Blvd', 'Rd', 'Ct', 'Pl', 'P.O', 'Co', 'Corp', 'Inc', 'Ltd', 'Assn', 'Dept', 'Univ', 'Gov', 'Mfg',
+                // Time/Date
+                'Jan', 'Feb', 'Mar', 'Apr', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+                'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun',
+                'A.M', 'P.M',
+                // Academic/Titles
+                'Ph.D', 'M.D', 'B.A', 'B.S', 'M.A', 'J.D', 'Esq',
+                // Other common acronyms/initials that might use periods
+                'U.S', 'U.S.A', 'U.K', 'E.U', 'N.A.S.A', 'F.B.I', 'C.I.A', 'D.E.A', 'I.C.E',
+                // Miscellaneous
+                'Vol', 'Chap', 'Sec', 'Para', 'App', 'Conf', 'Min', 'Max', 'Avg', 'No', 'Fig'
+            ],
+
             // Special-cased honorifics which are excluded from titles and ignored during split-by-sentences operations
             honorifics: () => [
                 "mr.", "ms.", "mrs.", "dr."
@@ -4199,12 +4332,154 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
         // Recursively calling AutoCards().API is computationally wasteful
         // AutoCards uses this collection of static methods as an internal proxy
 
+        /**
+         * Trims an incomplete phrase from the end of a string.
+         * This function identifies the last valid phrase terminator (e.g., '.', '?', ',', '!")
+         * and removes any subsequent text, which is considered an unfinished fragment.
+         * It's designed to clean up abruptly truncated text, especially from AI outputs.
+         * @param {string} str The input string to trim.
+         * @returns {string} The cleaned string with any trailing fragment removed.
+         */
+        static trimPhraseFrag(str) {
+            if (typeof str === 'undefined') return "";
+            // Create a regex pattern from a list of common abbreviations (e.g., "Mr.", "Mrs.", "e.g.").
+            // This is used in a negative lookbehind to prevent mistaking an abbreviation for a phrase end.
+            const abbrPattern = Words.commonHonorificsAbbreviations
+                .map(abbr => abbr.replace(/\./g, '\\.')) // Escape any literal periods in the abbreviations
+                .join('|');
+
+            // Define what constitutes a "true" phrase ending. This includes:
+            // 1. Punctuation like ellipses, "?", "!", or ",".
+            // 2. A period that is NOT part of an abbreviation.
+            // 3. Any of the above can be optionally followed by a closing quote, parenthesis, or other matching delimiters.
+            const truePhraseEnd = `(?:\\.{3}|[?!,]|(?<!\\b(?:${abbrPattern}))\\.)['")\\]}]?`;
+
+            // This regex splits the entire string into two parts:
+            // Group 1: The "keep" part. Everything from the start to the last valid phrase end.
+            // Group 2: The "fragment" part. Everything after the last valid phrase end.
+            // The 's' flag allows '.' to match newlines, handling multi-line text.
+            const fragmentRemovalRegex = new RegExp(
+                `^(.*(?:${truePhraseEnd}[ \\t\\r\\n]*))?(.*)$`,
+                's'
+            );
+            const matches = str.match(fragmentRemovalRegex);
+
+            if (matches) {
+                // The first group ($1) is the part we want to keep.
+                const keepPart = matches[1] || ''; // Default to empty string if undefined
+
+                // The second group ($2) is the fragment we are removing.
+                const fragmentPart = matches[2] || ''; // Default to empty string
+
+                console.log("--- Match Found ---");
+                console.log("Part to Keep ($1): ", keepPart);
+                console.log("Fragment to Remove ($2): ", fragmentPart);
+
+                // Return the "keep" part, effectively trimming the fragment.
+                return keepPart.trimEnd();
+            }
+
+            // By replacing the entire string with only Group 1, we effectively delete the fragment.
+            //const trimmed = str.replace(fragmentRemovalRegex, '$1');
+
+            return src;
+        }
+        static trimPhraseFragIf(condition, str) {
+            return condition ? (Internal.trimPhraseFrag(str)) : str;
+        }
+
+        static trimDelimParenFrag(str) {
+            return str.replace(/\((?![^)]*\))\s*$/, "");
+        }
+        static trimDelimBraceFrag(str) {
+            return str.replace(/\{(?![^}]*\})\s*$/, "");
+        }
+        static trimDelimBracketFrag(str) {
+            return str.replace(/\[(?![^\]]*\])\s*$/, "");
+        }
+        static trimDelimDQuoteFrag(str) {
+            return str.replace(/(?<!\d)\"[^"\s][^"\n]*$/, "");
+        } 
+        static trimDelimSQuoteFrag(str) {
+            return str.replace(/(?<!\w)\'[^'\n]*$/, "");
+        }
+        
+        static trimDelimiterFrag(str) {
+            return Internal.trimDelimParenFrag(
+                        Internal.trimDelimDQuoteFrag(
+                            Internal.trimDelimSQuoteFrag(str)
+                        )
+                    );
+               //Internal.trimDelimBracketFrag(
+                //    Internal.trimDelimBraceFrag(
+                //        Internal.trimDelimParenFrag(
+                //            Internal.trimDelimSQuoteFrag(
+                //                Internal.trimDelimDQuoteFrag(str)
+                //            )
+                //        )
+                //    )
+                //)
+            //;
+        }
+        static trimDelimiterFragIf(condition, str) {
+            return condition ? Internal.trimDelimiterFrag(str) : str;
+        }
+
+        /**
+         * Normalizes whitespace and newlines in a block of text.
+         * - Ensures single spaces between sentences.
+         * - Removes spaces before newlines (trailing whitespace).
+         * - Collapses multiple newlines into a maximum of two (for paragraph breaks).
+         * - Removes empty or whitespace-only lines.
+         * @param {string} str The input string.
+         * @returns {string} The cleaned string with normalized whitespace.
+         */
+        static normalizeWhitespace(str) {
+            if (typeof str !== 'string') return "";
+
+            let cleaned = str;
+
+            // 1. Standardize sentence spacing: Replace any whitespace following sentence-ending
+            //    punctuation with a single space. This handles cases like "Hello.   World" -> "Hello. World".
+            //    The lookbehind `(?<=[.?!])` ensures we only target spaces after punctuation.
+            cleaned = cleaned.replace(/(?<=[.?!,:;\)\]\}"'/])[ \t]+/g, ' ');
+
+            // 2. Remove trailing whitespace: Delete all spaces and tabs at the end of every line.
+            //    The `m` (multiline) flag is crucial here.
+            cleaned = cleaned.replace(/[ \t]+$/gm, '');
+
+            // 3. Collapse excess newlines: Replace three or more newlines with just two,
+            //    preserving paragraph breaks but removing excessive empty space.
+            cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+
+            // 4. Final clean: if it ends with a newline just return it, otherwise make it end in a single space.
+            cleaned = cleaned.endsWith('\n') ? cleaned : cleaned.trimEnd() + ' ';
+
+            return cleaned;
+        }
+        static stripAsterisks(str) {
+            return str.replace(/\*/g,"");
+        }
+        static stripAsterisksIf(condition, str) {
+            return condition ? Internal.stripAsterisks(str) : str;
+        }
+
+        static prettifyEmDashes(str) {
+            return str.replace(/(?<!^\s*)(?: - | ?– ?)(?!\s*$)/g, "—");
+        }
+        static prettifyEmDashesIf(condition, str) {
+            return condition ? Internal.prettifyEmDashes(str): str;
+        }
+
         static escapeRegExp(str) { //
             return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); //
         }
 
         static SCContainerWrapSize() {
             return AC.config.SCContainerOpen.length + AC.config.SCContainerClose.length;
+        }
+        static SCContainerSentinelSize() {
+            return AC.config.SCContainerAIBeginSentinel.length + AC.config.SCContainerAIEndSentinel.length;
         }
         static SCEntryMaxLen = 2000;
         static SCContainerIsWrapped(content) {
@@ -4289,25 +4564,30 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
                 logEvent("The title '" + request.title + "' is invalid or unavailable for card generation", true);
                 return false;
             }
+
+            // For rawAIPromptMode, we don't prepend the title and just send raw prompt to the AI.
+            const entryStr = AC.config.rawAIPromptMode ? (request.entryStart ?? "") : "{title: " + title + "}" + limitString(cleanSpaces((function() {
+                const entry = (request.entryStart ?? "").toString().trim();
+                //log("AC.generation.pending.push entry: ", entry);
+                if (entry === "") {
+                    return "";
+                } else {
+                    return ("\n" + entry + (function() {
+                        if (/[a-zA-Z]$/.test(entry)) {
+                            return ".";
+                        } else {
+                            return "";
+                        }
+                    })() + " ");
+                }
+                })()), 2000 - Internal.SCContainerWrapSize());
+
             AC.generation.pending.push(O.s({
                 title: title,
                 type: limitString((request.type || AC.config.defaultCardType).toString().trim(), 100),
                 keys: predefinedPair[1] || buildKeys((request.keysStart ?? "").toString(), titleKeyPair.newKey),
-                entry: limitString("{title: " + title + "}" + cleanSpaces((function() {
-                    const entry = (request.entryStart ?? "").toString().trim();
-                    //log("AC.generation.pending.push entry: ", entry);
-                    if (entry === "") {
-                        return "";
-                    } else {
-                        return ("\n" + entry + (function() {
-                            if (/[a-zA-Z]$/.test(entry)) {
-                                return ".";
-                            } else {
-                                return "";
-                            }
-                        })() + " ");
-                    }
-                })()), 2000 - Internal.SCContainerWrapSize()),
+                //entry: limitString("{title: " + title + "}" + cleanSpaces((function() {
+                entry: entryStr,
                 description: limitString((
                     (function() {
                         const description = limitString((request.description ?? "").toString().trim(), 9900);
@@ -4341,8 +4621,13 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
                         cleanSpaces((request.entryPromptDetails ?? "").toString().trim())
                     ), title);
 
-                    if (AC.config.SCContainerize && AC.config.SCContainerAIEndSentinel) {
-                        prompt = prompt.replaceAll(/%SC_SENTINEL%/g, AC.config.SCContainerAIEndSentinel);
+                    if (AC.config.SCContainerize) {
+                        if (AC.config.SCContainerAIBeginSentinel) {
+                            prompt = prompt.replaceAll(/%SC_BEGIN_SENTINEL%/g, AC.config.SCContainerAIBeginSentinel);
+                        }
+                        if (AC.config.SCContainerAIEndSentinel) {
+                            prompt = prompt.replaceAll(/%SC_END_SENTINEL%/g, AC.config.SCContainerAIEndSentinel);
+                        }
                     }
                     //log("request.prompt: ", prompt);
                     //log("request.promptDetails: ", promptDetails);
@@ -4927,12 +5212,35 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
                     return null;
                 }
             })(),
+
+
+            // Should incomplete sentences be trimmed from card responses?
+            trimSentenceFragCards: check(DEFAULT_TRIM_SENTENCE_FRAG_CARDS, true),
+            // Should unbalanced quote/delimited text be trimmed from card responses?
+            trimDelimiterFragCards: check(DEFAULT_TRIM_DELIMITER_FRAGS_CARDS, true),
+            // Should asterisks be stripped from AI card responses?
+            stripAsterisksCards: check(DEFAULT_STRIP_ASTERISKS_CARDS, true),
+            // Should em dashes be prettifies in AI card responses?
+            prettifyEmDashesCards: check(DEFAULT_PRETTIFY_EMDASHES_CARDS, true),
+
+            // Should incomplete sentences be trimmed from card responses?
+            trimSentenceFragStory: check(DEFAULT_TRIM_SENTENCE_FRAG_STORY, true),
+            // Should unbalanced quote/delimited text be trimmed from card responses?
+            trimDelimiterFragStory: check(DEFAULT_TRIM_DELIMITER_FRAGS_STORY, true),
+            // Should asterisks be stripped from AI card responses?
+            stripAsterisksStory: check(DEFAULT_STRIP_ASTERISKS_STORY, true),
+            // Should em dashes be prettifies in AI card responses?
+            prettifyEmDashesStory: check(DEFAULT_PRETTIFY_EMDASHES_STORY, true),
+
+
             // Should story cards be containerized?
             SCContainerize: check(DEFAULT_SC_CONTAINERIZE, false),
             // Provide the opening and closing delimiters for story cards.
             SCContainerOpen: check(DEFAULT_SC_CONTAINER_OPEN, "", "string"),
             SCContainerClose: check(DEFAULT_SC_CONTAINER_CLOSE, "", "string"),
-            // An End Sentinel the AI may use to trigger end of output.
+            // A Begin Sentinel the AI may use to mark beginning of output.
+            SCContainerAIBeginSentinel: check(DEFAULT_SC_AI_BEGIN_SENTINEL, "", "string"),
+            // An End Sentinel the AI may use to mark ending of output.
             SCContainerAIEndSentinel: check(DEFAULT_SC_AI_END_SENTINEL, "", "string"),
             
             // Should the debug data card be visible?
@@ -5296,7 +5604,7 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
                             result += " Proceed to redo " + count + " cards";
                         }
                     }
-                    logEvent(parsed);
+                    //logEvent(parsed);
                 } else if (!requestDetails) {
                     // Request with only title
                     submitRequest("");
@@ -5326,11 +5634,11 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
                     if (success) {
                         const parsed = left + AC.generation.pending[AC.generation.pending.length - 1].title + right;
                         result += parsed + " -> Success!";
-                        logEvent(parsed);
+                        //logEvent(parsed);
                     } else {
                         const parsed = left + request.title + right;
                         result += parsed + " -> \"" + request.title + "\" is invalid or unavailable";
-                        logEvent(parsed);
+                        //logEvent(parsed);
                     }
                     return;
                 }
@@ -5461,7 +5769,7 @@ Continue the entity for %{title} below while avoiding repetition of previous pla
     function notify(message) {
         if (typeof message === "string") {
             AC.message.pending.push(message);
-            logEvent(message);
+            //logEvent(message);
         } else if (Array.isArray(message)) {
             message.forEach(element => notify(element));
         } else if (message instanceof Set) {
