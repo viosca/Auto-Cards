@@ -36,18 +36,17 @@ function AutoCards(inHook, inText, inStop) {
     // (0 to 9999)
 
     // Use a bulleted list format for newly generated card entries?
+    // The AI is going to bullet the list for us, so turn this off.
     const DEFAULT_USE_BULLETED_LIST_MODE = false
     // (true or false)
 
     // Don't edit/modify the generation prompt sent to the AI.
     // This makes it possible to send JavaScript to the AI.
     const DEFAULT_USE_RAWAI_PROMPT_MODE = true
-    // (true or false)
 
     // Don't edit/modify the AI response(s)?
     // This makes it possible to define the format of the response in the template.bulleted lists.
     const DEFAULT_USE_RAWAI_RESPONSE_MODE = true
-    // (true or false)
 
     // Maximum allowed length for newly generated story card entries?
     const DEFAULT_GENERATED_ENTRY_LIMIT = 750
@@ -81,19 +80,19 @@ function AutoCards(inHook, inText, inStop) {
     const DEFAULT_DO_LSI_V2 = false
     // (true or false)
 
-    // Trim incomplete sentences for story cards
-    const DEFAULT_TRIM_SENTENCE_FRAG_CARDS = true
+    // Trim incomplete phrases for story cards
+    const DEFAULT_TRIM_PHRASE_FRAG_CARDS = true
     // Trim incomplete delimiters for story cards
-    const DEFAULT_TRIM_DELIMITER_FRAGS_CARDS = true
+    const DEFAULT_TRIM_DELIMITER_FRAG_CARDS = true
     // Strip out asterisks for story cards
     const DEFAULT_STRIP_ASTERISKS_CARDS = true
     // Prettify Em Dashes for story cards.
     const DEFAULT_PRETTIFY_EMDASHES_CARDS = true
 
-    // Trim incomplete sentences in normal story responses.
-    const DEFAULT_TRIM_SENTENCE_FRAG_STORY = true
+    // Trim incomplete phrases in normal story responses.
+    const DEFAULT_TRIM_PHRASE_FRAG_STORY = true
     // Trim incomplete delimiters in normal story responses.
-    const DEFAULT_TRIM_DELIMITER_FRAGS_STORY = true
+    const DEFAULT_TRIM_DELIMITER_FRAG_STORY = true
     // Strip out asterisks in normal story responses.
     const DEFAULT_STRIP_ASTERISKS_STORY = true
     // Prettify Em Dashes in normal story responses.
@@ -138,7 +137,7 @@ function AutoCards(inHook, inText, inStop) {
     ); // (mimic this multi-line "text" format)
 
     
-    // AI prompt used to generate new story card entries?
+    // AI prompt used to generate new story card in Entity (NER) format?
     const DEFAULT_CARD_GENERATION_PROMPT =
 `-----
 <SYSTEM>
@@ -630,8 +629,8 @@ else {
                 "doAC", "deleteAllAutoCards", "pinConfigureCard", "addCardCooldown", "bulletedListMode", "rawAIPromptMode", "rawAIResponseMode", 
                 "defaultEntryLimit", "defaultCardsDoMemoryUpdates", "defaultMemoryLimit", "memoryCompressionRatio", "ignoreAllCapsTitles", "readFromInputs", 
                 "minimumLookBackDistance", "LSIv2", 
-                "trimSentenceFragCards", "trimDelimiterFragCards", "stripAsterisksCards", "prettifyEmDashesCards",
-                "trimSentenceFragStory", "trimDelimiterFragStory", "stripAsterisksStory", "prettifyEmDashesStory",
+                "trimPhraseFragCards", "trimDelimiterFragCards", "stripAsterisksCards", "prettifyEmDashesCards",
+                "trimPhraseFragStory", "trimDelimiterFragStory", "stripAsterisksStory", "prettifyEmDashesStory",
                 "SCContainerize", "SCContainerOpen", "SCContainerClose", "SCContainerAIBeginSentinel", "SCContainerAIEndSentinel",
                 "showDebugData", "showDebugDataSCRawAIEntry", "showDebugDataSCRawAIMemory", "generationPrompt", "compressionPrompt", "defaultCardType"
             ],
@@ -2190,11 +2189,11 @@ else {
                         }
                     }
                 }
-                if (parseConfig("trimcardsentencefrags", "boolean", "trimSentenceFragCards")) { 
-                    notify("Trimming story card sentence frags: \"" + cfg + "\"");
+                if (parseConfig("trimcardphrasefrag", "boolean", "trimPhraseFragCards")) { 
+                    notify("Trimming story card phrase frag: \"" + cfg + "\"");
                 }
-                if (parseConfig("trimcardquotefrags", "boolean", "trimDelimiterFragCards")) { 
-                    notify("Trimming incomplete story card quotes: \"" + cfg + "\"");
+                if (parseConfig("trimcardquotefrag", "boolean", "trimDelimiterFragCards")) { 
+                    notify("Trimming story card quote frag: \"" + cfg + "\"");
                 }
                 if (parseConfig("stripcardasterisks", "boolean", "stripAsterisksCards")) { 
                     notify("Stripping card asterisks: \"" + cfg + "\"");
@@ -2203,11 +2202,11 @@ else {
                     notify("Prettifying card em dashes: \"" + cfg + "\"");
                 }
 
-                if (parseConfig("trimstorysentencefrags", "boolean", "trimSentenceFragStory")) { 
+                if (parseConfig("trimstoryphrasefrag", "boolean", "trimPhraseFragStory")) { 
                     notify("Trimming story card sentence frags: \"" + cfg + "\"");
                 }
-                if (parseConfig("trimstoryquotefrags", "boolean", "trimDelimiterFragStory")) { 
-                    notify("Trimming incomplete story card quotes: \"" + cfg + "\"");
+                if (parseConfig("trimstoryquotefrag", "boolean", "trimDelimiterFragStory")) { 
+                    notify("Trimming story card quote frag: \"" + cfg + "\"");
                 }
                 if (parseConfig("stripstoryasterisks", "boolean", "stripAsterisksStory")) { 
                     notify("Stripping card asterisks: \"" + cfg + "\"");
@@ -3201,6 +3200,8 @@ else {
             }
             break; }
         case "output": {
+            // AutoCards was called within the output modifier
+
             if (AC.config.showDebugDataSCRawAIEntry) {
                 logEvent("OUTPUT: Raw AI Output (TEXT): " + TEXT); //
             }
@@ -3208,7 +3209,7 @@ else {
             const output = 
                 Internal.normalizeWhitespace(
                     Internal.trimDelimiterFragIf(AC.config.trimDelimiterFragStory,
-                        Internal.trimPhraseFragIf(AC.config.trimSentenceFragStory,
+                        Internal.trimPhraseFragIf(AC.config.trimPhraseFragStory,
                             Internal.prettifyEmDashesIf(AC.config.prettifyEmDashesStory,
                                 Internal.stripAsterisksIf(AC.config.stripAsterisksStory,        
                                     TEXT
@@ -3269,7 +3270,7 @@ else {
                         // Now clean up sentence, and delimiter frags and remove asterisks.
                         AC.generation.workpiece.entry = 
                             Internal.normalizeWhitespace(
-                                Internal.trimPhraseFragIf(AC.config.trimSentenceFragCards,
+                                Internal.trimPhraseFragIf(AC.config.trimPhraseFragCards,
                                     Internal.trimDelimiterFragIf(AC.config.trimDelimiterFragCards,
                                         Internal.prettifyEmDashesIf(AC.config.prettifyEmDashesCards,
                                             Internal.stripAsterisksIf(AC.config.stripAsterisksCards,
@@ -3303,7 +3304,7 @@ else {
 
                     if (
                         textClone.includes("\"")
-                    || /(?<=^|\s|—|\(|\[|{)sa(ys?|id)(?=\s|\.|\?|!|,|;|—|\)|\]|}|$)/i.test(textClone)
+                        || /(?<=^|\s|—|\(|\[|{)sa(ys?|id)(?=\s|\.|\?|!|,|;|—|\)|\]|}|$)/i.test(textClone)
                     ) {
                         // Discard full outputs containing "say" or quotations
                         // To build coherent entries, the AI must not attempt to continue the story
@@ -3716,13 +3717,13 @@ else {
                 "> Minimum turns age for title detection: " + AC.config.minimumLookBackDistance,
                 "> Use Live Script Interface v2: " + (AC.config.LSIv2 !== null),
 
-                "> Trim card sentence frags: " + AC.config.trimSentenceFragCards,
-                "> Trim card quote frags: " + AC.config.trimDelimiterFragCards,
+                "> Trim card phrase frag: " + AC.config.trimPhraseFragCards,
+                "> Trim card quote frag: " + AC.config.trimDelimiterFragCards,
                 "> Strip card asterisks: " + AC.config.stripAsterisksCards,
                 "> Pretify card em dashes: " + AC.config.prettifyEmDashesCards,
                 
-                "> Trim story sentence frags: " + AC.config.trimSentenceFragStory,
-                "> Trim story quote frags: " + AC.config.trimDelimiterFragStory,
+                "> Trim story phrase frag: " + AC.config.trimPhraseFragStory,
+                "> Trim story quote frag: " + AC.config.trimDelimiterFragStory,
                 "> Strip story asterisks: " + AC.config.stripAsterisksStory,
                 "> Pretify story em dashes: " + AC.config.prettifyEmDashesStory,
                 
@@ -4031,7 +4032,7 @@ else {
                 [343332, 451737, 323433, 377817], [436425, 356928, 363825, 444048], [323433, 428868, 310497, 413952], [350097, 66825, 436425, 413952, 406593, 444048], [316932, 330000, 436425, 392073], [444048, 356928, 323433], [451737, 444048, 363825], [330000, 310497, 392073, 399300]
             ],
             delimiter: () => (
-                "———————————————————————————"
+                "——————————————————————————"
             ),
             // Source code location
             copy: () => [
@@ -4781,6 +4782,7 @@ else {
                 card.type = card.type.trim();
                 card.title = card.title.trim();
                 // card.keys should be left as-is
+                //card.entry = card.entry.trim();
                 card.description = card.description.trim();
                 if (isExternal) {
                     O.s(card);
@@ -5215,18 +5217,18 @@ else {
 
 
             // Should incomplete sentences be trimmed from card responses?
-            trimSentenceFragCards: check(DEFAULT_TRIM_SENTENCE_FRAG_CARDS, true),
+            trimPhraseFragCards: check(DEFAULT_TRIM_PHRASE_FRAG_CARDS, true),
             // Should unbalanced quote/delimited text be trimmed from card responses?
-            trimDelimiterFragCards: check(DEFAULT_TRIM_DELIMITER_FRAGS_CARDS, true),
+            trimDelimiterFragCards: check(DEFAULT_TRIM_DELIMITER_FRAG_CARDS, true),
             // Should asterisks be stripped from AI card responses?
             stripAsterisksCards: check(DEFAULT_STRIP_ASTERISKS_CARDS, true),
             // Should em dashes be prettifies in AI card responses?
             prettifyEmDashesCards: check(DEFAULT_PRETTIFY_EMDASHES_CARDS, true),
 
             // Should incomplete sentences be trimmed from card responses?
-            trimSentenceFragStory: check(DEFAULT_TRIM_SENTENCE_FRAG_STORY, true),
+            trimPhraseFragStory: check(DEFAULT_TRIM_PHRASE_FRAG_STORY, true),
             // Should unbalanced quote/delimited text be trimmed from card responses?
-            trimDelimiterFragStory: check(DEFAULT_TRIM_DELIMITER_FRAGS_STORY, true),
+            trimDelimiterFragStory: check(DEFAULT_TRIM_DELIMITER_FRAG_STORY, true),
             // Should asterisks be stripped from AI card responses?
             stripAsterisksStory: check(DEFAULT_STRIP_ASTERISKS_STORY, true),
             // Should em dashes be prettifies in AI card responses?
@@ -5604,7 +5606,7 @@ else {
                             result += " Proceed to redo " + count + " cards";
                         }
                     }
-                    //logEvent(parsed);
+                    logEvent(parsed);
                 } else if (!requestDetails) {
                     // Request with only title
                     submitRequest("");
@@ -5634,11 +5636,11 @@ else {
                     if (success) {
                         const parsed = left + AC.generation.pending[AC.generation.pending.length - 1].title + right;
                         result += parsed + " -> Success!";
-                        //logEvent(parsed);
+                        logEvent(parsed);
                     } else {
                         const parsed = left + request.title + right;
                         result += parsed + " -> \"" + request.title + "\" is invalid or unavailable";
-                        //logEvent(parsed);
+                        logEvent(parsed);
                     }
                     return;
                 }
@@ -5769,7 +5771,7 @@ else {
     function notify(message) {
         if (typeof message === "string") {
             AC.message.pending.push(message);
-            //logEvent(message);
+            logEvent(message);
         } else if (Array.isArray(message)) {
             message.forEach(element => notify(element));
         } else if (message instanceof Set) {
