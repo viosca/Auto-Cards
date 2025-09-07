@@ -161,15 +161,14 @@ function AutoCards(inHook, inText, inStop) {
 if (entityType is 'Person') {
     print \`
 %SC_BEGIN_SENTINEL%
-- Type: Person, {Optional Entity Subtype}.
 - Name: %{title}.
+- Type: Person, {Optional Entity Subtype}.
 - Bio: {Age}, {Gender}, {Pronouns}, {Occupation}.
 - Physique: {Height}, {Weight}, {Features}... // i.e. hair, eyes, height, weight, body tone, measurements (just numbers and -'s), etc...
 - Appearance: {Typical Appearance}. // i.e. briefly their normal attire/style.
 - Archetypes: {Character Archetypes}. // 1 or 2 archetypes.
 - Tropes: {Character Tropes}. // 1 or 2 tropes. Imperative pure prose list.
 - Psyche: {Traits}, {Motivations}, {Flaws}... // imperative pure prose list, briefly.
-- MBTI: {CODE} - {type}
 - Description: {Description}. // i.e. One sentence imperative pure prose description, 200 characters max.
 - End Sentinel: %SC_END_SENTINEL% // Important: complete your Entity work with this sentinel!
 \`;
@@ -3220,7 +3219,7 @@ else {
                     )
                 );
 
-            if (0 < AC.chronometer.postpone) {
+                if (0 < AC.chronometer.postpone) {
                 // Do not capture or replace any outputs during this turn
                 promoteAmnesia();
                 if (permitOutput()) {
@@ -3282,17 +3281,12 @@ else {
                                 )
                             )
                         ;
-                        AC.generation.workpiece.type = "Foo!";
-                        // Define the regular expression
-                        const entityTypeRegex = /^- Type: ([^,]+),/m;
-                        const entityTypeMatch = AC.generation.workpiece.entry.match(entityTypeRegex);
-                        const entityType = entityTypeMatch ? entityTypeMatch[1] : AC.config.defaultCardType;
+
                         // If the end sentinel was seen above, we're done.
                         if (sawEndSentinel) {
                             // The AI signaled the end of the entry.
                             //logEvent("outputModifier: Saw the end sentinel, skipping end."); //
                             // The final cleanup happens in the card generation.
-                            AC.generation.workpiece.type = entityType;
                             return 0; // Causes a skip to end.
                         }
 
@@ -3301,7 +3295,6 @@ else {
                         //logEvent("workpiece length: " + entrySize);
                         if (entrySize > AC.config.defaultEntryLimit ) {
                             //logEvent("outputModifier: Got max entry length, skipping end."); //
-                            AC.generation.workpiece.type = entityType;
                             return 0;
                         }
                         return estimateRemainingGens();
